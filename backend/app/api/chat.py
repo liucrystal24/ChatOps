@@ -77,7 +77,12 @@ async def prepare(
     )
 
 
-@router.post("/conversations/{conversation_id}/messages:stream", response_class=EventSourceResponse)
+@router.post(
+    "/conversations/{conversation_id}/messages:stream",
+    response_class=EventSourceResponse,
+    description="证据摘录式问答：模型选择原文，校验后发送 delta；中间 JSON 不输出。"
+    "证据结构非法发送 ANSWER_PLAN_INVALID error；仅最终消息与引用提交后发送 done。",
+)
 async def stream(
     run: Annotated[Generation, Depends(prepare)], service: Chat
 ) -> AsyncIterator[ServerSentEvent]:

@@ -138,6 +138,8 @@ erDiagram
 
 日志不保存全文，但业务会话需要持久化正文；其读取严格受会话归属及当前知识库权限控制。usage 仅记录供应商实际返回的数据，未返回时为 NULL，不能估造计费 token 数。
 
+阶段5质量修复：无新增表/迁移。model_config 保存 `answer_mode=extractive-v1`、`selection_max_tokens=256`；timings 同样记录 answer_mode。content 仅保存校验后的证据摘录或固定拒答，模型中间 JSON 不进入 content。候选全部被过滤时不调用生成模型，usage 可为 NULL。
+
 ### message_citations（阶段 5）
 
 字段：`id` PK、`message_id` FK、`source_label VARCHAR(16)`、`document_id/index_version_id/chunk_id` FK、`locator_snapshot JSON`、`retrieval_score DOUBLE NULL`、`rerank_score DOUBLE NULL`、`created_at`。

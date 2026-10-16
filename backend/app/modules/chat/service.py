@@ -12,7 +12,8 @@ from sqlalchemy import select
 from app.core.errors import AppError
 from app.infrastructure.chat_model import ModelFailure
 from app.infrastructure.models import Citation, Conversation, Message
-from app.modules.chat.prompt import ABSTENTION, messages_for, normalize_answer, validate_answer
+from app.modules.chat.evidence import catalog, render_plan
+from app.modules.chat.prompt import ABSTENTION, messages_for, validate_answer
 from app.modules.chat.schemas import (
     CitationResponse,
     ConversationList,
@@ -237,7 +238,11 @@ class ChatService:
                 reply_to_message_id=user_id,
                 content="",
                 retrieval_config=data.retrieval.model_dump(mode="json"),
-                model_config=self.model.snapshot(),
+                model_config={
+                    **self.model.snapshot(),
+                    "answer_mode": "extractive-v1",
+                    "selection_max_tokens": 256,
+                },
                 generation_deadline_at=now + timedelta(seconds=self.settings.chat_deadline_seconds),
                 heartbeat_at=now,
                 created_at=now + timedelta(microseconds=1),
@@ -441,26 +446,30 @@ class ChatService:
                     sources.append(source)
             run.sources = sources
             await emit("sources", {"candidates": sources})
-            if not sources:
+            run.timings["answer_mode"] = "extractive-v1"
+            if not catalog(answer_question, sources):
                 run.text = ABSTENTION
                 run.timings["first_token_ms"] = round((monotonic() - run.started) * 1000, 2)
                 await emit("delta", {"text": ABSTENTION})
             else:
+                plan = ""
                 async for part in self.model.stream(
-                    messages_for(history, answer_question, sources)
+                    messages_for(history, answer_question, sources), max_tokens=256, json_mode=True
                 ):
                     if "usage" in part:
                         run.usage = part["usage"]
                     if part.get("text"):
-                        if not run.text:
-                            run.timings["first_token_ms"] = round(
-                                (monotonic() - run.started) * 1000, 2
-                            )
-                        run.text += part["text"]
-                        if len(run.text) > 50000:
-                            raise ModelFailure("MODEL_RESPONSE_INVALID", "答案超过长度限制")
-                        await emit("delta", {"text": part["text"]})
-            run.text = normalize_answer(run.text)
+                        plan += part["text"]
+                        if len(plan) > 10000:
+                            raise ModelFailure("ANSWER_PLAN_INVALID", "答案证据结构超过长度限制")
+                answer = render_plan(plan, answer_question, sources)
+                # 中间 JSON 不写入 run.text；校验失败、权限撤销时不泄露未经验证的草稿。
+                validate_answer(answer, sources)
+                run.timings["first_token_ms"] = round((monotonic() - run.started) * 1000, 2)
+                for offset in range(0, len(answer), 200):
+                    part = answer[offset : offset + 200]
+                    await emit("delta", {"text": part})
+                    run.text += part
             answer_type, citations = validate_answer(run.text, sources)
             run.timings["total_ms"] = round((monotonic() - run.started) * 1000, 2)
             await self.finish(run, "completed", answer_type=answer_type, citations=citations)

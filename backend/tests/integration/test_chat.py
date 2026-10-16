@@ -21,7 +21,7 @@ class TestModel:
 
     def __init__(self):
         self.calls = 0
-        self.text = "测试回答 [S1]"
+        self.text = '{"evidence_ids":["E1"]}'
         self.wait = None
         self.entered = asyncio.Event()
         self.cancelled = False
@@ -38,7 +38,8 @@ class TestModel:
     async def rewrite(self, history, question):
         return "独立问题", None
 
-    async def stream(self, messages):
+    async def stream(self, messages, max_tokens=None, *, json_mode=False):
+        assert json_mode and max_tokens == 256
         self.calls += 1
         try:
             yield {"text": self.text}
@@ -270,14 +271,15 @@ async def test_answer_citations_rebuild_retention_and_deleted_source(indexing):
     assert not (await c.service.message(c.actor, run.message_id)).citations[0].available
 
 
-@pytest.mark.parametrize("invalid", ["无依据答案", "引用错误 [S9]"])
+@pytest.mark.parametrize("invalid", ["无依据答案", '{"evidence_ids":["E999"]}'])
 async def test_invalid_citation_fails_and_is_not_in_history(indexing, invalid):
     c = await indexed_chat(indexing)
     c.model.text = invalid
     run = await start(c)
     result = await events(c.service, run)
-    assert result[-1].event == "error" and result[-1].data["code"] == "CITATION_INVALID"
+    assert result[-1].event == "error" and result[-1].data["code"] == "ANSWER_PLAN_INVALID"
     assert not any(e.event == "done" for e in result)
+    assert not any(e.event == "delta" for e in result)
     stored = await c.service.message(c.actor, run.message_id)
     assert stored.status == "failed" and not stored.citations
 
@@ -295,8 +297,9 @@ async def test_permission_revoked_while_provider_idle_cancels_without_more_outpu
     while True:
         event = await anext(stream)
         names.append(event.event)
-        if event.event == "delta":
+        if event.event == "sources":
             break
+    await asyncio.wait_for(c.model.entered.wait(), 3)
     await c.b.knowledge.remove_member(bob, c.kb_id, c.actor)
     final = await asyncio.wait_for(anext(stream), 3)
     assert final.event == "error" and final.data["code"] == "RESOURCE_NOT_FOUND"
@@ -312,8 +315,9 @@ async def test_source_deleted_during_generation_stops_output(indexing):
     c.model.wait = asyncio.Event()
     run = await start(c)
     stream = c.service.stream(run)
-    while (await anext(stream)).event != "delta":
+    while (await anext(stream)).event != "sources":
         pass
+    await asyncio.wait_for(c.model.entered.wait(), 3)
     await c.documents.delete(c.actor, c.document_id)
     final = await asyncio.wait_for(anext(stream), 3)
     assert final.event == "error" and final.data["code"] == "SOURCE_CHANGED"
@@ -391,7 +395,7 @@ async def test_commit_failure_rolls_back_citations_and_never_sends_done(indexing
 
 async def test_explicit_refusal_is_stored_without_draft_facts_or_citations(indexing):
     c = await indexed_chat(indexing)
-    c.model.text = "培训费用在提供的资料中未提及。"
+    c.model.text = '{"evidence_ids":[]}'
     run = await start(c)
     result = await events(c.service, run)
     assert result[-1].event == "done" and result[-1].data["answer_type"] == "abstention"

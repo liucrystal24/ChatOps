@@ -295,6 +295,7 @@ async def run(args):
             str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in [
                 ROOT / "scripts/stage5_metrics.py",
+                ROOT / "backend/app/modules/chat/evidence.py",
                 ROOT / "scripts/evaluate_stage5.py",
                 ROOT / "backend/app/modules/retrieval/service.py",
                 ROOT / "backend/app/modules/indexing/parser.py",

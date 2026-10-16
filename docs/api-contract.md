@@ -156,7 +156,7 @@ HTTP 响应开始前完成身份、参数、会话、生成槽、模型配置等
 | --- | --- | --- |
 | `start` | request_id、user_message_id、message_id | 生成记录已提交 |
 | `sources` | candidates 数组 | 召回复核、上下文裁剪之后，候选不等于最终引用 |
-| `delta` | text | 真实模型文本片段，或无证据时的明确拒答文本 |
+| `delta` | text | 模型选择证据并经服务端校验后的原文摘录，或明确拒答文本；不转发模型中间 JSON |
 | `done` | message_id、status、answer_type、citations、usage、timings | 最终消息与引用已提交，仅成功终止时 |
 | `error` | code、message、retryable、message_id、request_id | 流内失败，随后关闭；不会再发 done |
 
@@ -164,7 +164,7 @@ HTTP 响应开始前完成身份、参数、会话、生成槽、模型配置等
 
 候选来源字段：`source_label, chunk_id, document_id, index_version_id, filename, page_no?, section_title?, excerpt, retrieval_score, rerank_score?`；excerpt 为已鉴权、长度受限的正文。客户端链接必须走受保护接口，不使用内部文件 URL。
 
-done 的 `status="completed"`；`answer_type` 为 `answer` 或 `abstention`；citations 仅包含服务端验证存在于本轮候选的来源。未知引用、需要证据的回答缺少有效引用时，发送 `CITATION_INVALID` error 并将消息设 failed，不发送 done；不能伪造来源来补齐。usage 无供应商数据时 NULL，timings 区分检索、首 token 和总耗时。
+done 的 `status="completed"`；`answer_type` 为 `answer` 或 `abstention`；citations 仅包含服务端验证存在于本轮候选的来源。未知引用、需要证据的回答缺少有效引用时，发送 `CITATION_INVALID` error 并将消息设 failed，不发送 done；不能伪造来源来补齐。模型证据选择 JSON 非法、编号未知或重复时返回 `ANSWER_PLAN_INVALID`，校验前不发送答案 delta。usage 无供应商数据时 NULL（包括过滤后无可用证据、未调用生成模型的拒答），timings 区分检索、首段可展示文本和总耗时；`first_token_ms` 包含完整证据选择与验证时间，非供应商首 token 延迟。`answer_mode=extractive-v1` 标识本轮摘录模式。
 
 示意事件：
 

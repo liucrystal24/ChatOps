@@ -1,0 +1,256 @@
+{
+  "before_path": "evaluation/outputs/20261015T121205Z-all/report.json",
+  "after_path": "evaluation/outputs/20261015T145730Z-all/report.json",
+  "quality_path": "evaluation/outputs/20261015T145730Z-quality/report.json",
+  "report_sha256": {
+    "evaluation/outputs/20261015T121205Z-all/report.json": "1689deb20bf08dc81f97dbf03beb6b100e8130a60274cb8225946978f3351a02",
+    "evaluation/outputs/20261015T145730Z-all/report.json": "7b9062077534acc31d527228241d232b5a7c5ccabd16ac04cca20e5fe5e8b9eb",
+    "evaluation/outputs/20261015T145730Z-quality/report.json": "377cc33592ba748f08085c8a1f51fad59e56b245139c9d776f12612a6cad78db"
+  },
+  "before_summary": {
+    "n": 40,
+    "completed": 40,
+    "failures": 0,
+    "evidence_recall_at_5": {
+      "hits": 28,
+      "total": 28,
+      "value": 1.0
+    },
+    "citations": {
+      "valid": 39,
+      "total": 39,
+      "validity": 1.0
+    },
+    "abstention": {
+      "true": 11,
+      "unanswerable": 12,
+      "recall": 0.9166666666666666,
+      "false_abstentions": 0,
+      "precision": 1.0
+    },
+    "reference_fact_presence_proxy": 0.8928571428571429,
+    "human_correctness": null,
+    "human_fact_support": null,
+    "latency": {
+      "retrieval_ms": {
+        "p50": 271.61,
+        "p95": 781.96,
+        "n": 40
+      },
+      "rewrite_ms": {
+        "p50": 1419.25,
+        "p95": 1535.54,
+        "n": 6
+      },
+      "evidence_check_ms": {
+        "p50": null,
+        "p95": null,
+        "n": 0
+      },
+      "first_token_ms": {
+        "p50": 1285.73,
+        "p95": 2965.69,
+        "n": 40
+      },
+      "total_ms": {
+        "p50": 3316.68,
+        "p95": 14995.84,
+        "n": 40
+      }
+    },
+    "answer_usage": {
+      "prompt_tokens": 36591,
+      "completion_tokens": 1209,
+      "requests_with_usage": 40
+    }
+  },
+  "after_summary": {
+    "n": 40,
+    "completed": 40,
+    "failures": 0,
+    "evidence_recall_at_5": {
+      "hits": 28,
+      "total": 28,
+      "value": 1.0
+    },
+    "citations": {
+      "valid": 35,
+      "total": 35,
+      "validity": 1.0
+    },
+    "abstention": {
+      "true": 12,
+      "unanswerable": 12,
+      "recall": 1.0,
+      "false_abstentions": 0,
+      "precision": 1.0
+    },
+    "reference_fact_presence_proxy": 0.9285714285714286,
+    "human_correctness": null,
+    "human_fact_support": null,
+    "latency": {
+      "retrieval_ms": {
+        "p50": 180.25,
+        "p95": 356.83,
+        "n": 40
+      },
+      "rewrite_ms": {
+        "p50": 962.85,
+        "p95": 4730.51,
+        "n": 6
+      },
+      "evidence_check_ms": {
+        "p50": null,
+        "p95": null,
+        "n": 0
+      },
+      "first_token_ms": {
+        "p50": 1802.67,
+        "p95": 7521.92,
+        "n": 40
+      },
+      "total_ms": {
+        "p50": 1830.16,
+        "p95": 7545.95,
+        "n": 40
+      }
+    },
+    "answer_usage": {
+      "prompt_tokens": 58003,
+      "completion_tokens": 339,
+      "requests_with_usage": 39
+    }
+  },
+  "legacy_v1_summary": {
+    "n": 30,
+    "completed": 30,
+    "failures": 0,
+    "evidence_recall_at_5": {
+      "hits": 22,
+      "total": 22,
+      "value": 1.0
+    },
+    "citations": {
+      "valid": 27,
+      "total": 27,
+      "validity": 1.0
+    },
+    "abstention": {
+      "true": 8,
+      "unanswerable": 8,
+      "recall": 1.0,
+      "false_abstentions": 0,
+      "precision": 1.0
+    },
+    "reference_fact_presence_proxy": 1.0,
+    "human_correctness": null,
+    "human_fact_support": null,
+    "latency": {
+      "retrieval_ms": {
+        "p50": 180.25,
+        "p95": 356.83,
+        "n": 30
+      },
+      "rewrite_ms": {
+        "p50": 962.85,
+        "p95": 4730.51,
+        "n": 6
+      },
+      "evidence_check_ms": {
+        "p50": null,
+        "p95": null,
+        "n": 0
+      },
+      "first_token_ms": {
+        "p50": 1309.7,
+        "p95": 5235.74,
+        "n": 30
+      },
+      "total_ms": {
+        "p50": 1338.29,
+        "p95": 5276.96,
+        "n": 30
+      }
+    },
+    "answer_usage": {
+      "prompt_tokens": 40137,
+      "completion_tokens": 248,
+      "requests_with_usage": 29
+    }
+  },
+  "evidence_v2_summary": {
+    "hits": 41,
+    "total": 41,
+    "recall_at_5": 1.0,
+    "complete_questions": 28,
+    "answerable_questions": 28,
+    "human_annotation_reviewed": false
+  },
+  "quality_summary": {
+    "total": 21,
+    "passed": 21,
+    "human_correctness": null
+  },
+  "model_calls": {
+    "http_attempts": 51,
+    "embedding_http_attempts": 71,
+    "requests_with_usage": 51,
+    "prompt_tokens": 70638,
+    "completion_tokens": 565
+  },
+  "source_hashes": {
+    "scripts/stage5_metrics.py": "47958c1a0f8b5e3b47c6859696c69cff2875a1fdddeaef029f61235e593ac0cf",
+    "backend/app/modules/chat/evidence.py": "2cc812941a13e524a080a925ea6c0c23f4ab7e068713efdd1412110ee1cd788c",
+    "scripts/evaluate_stage5.py": "3eb5fc852046efdd1f44d984b49a0c5e6497ecfafea72cde04ab1efd27d25b53",
+    "backend/app/modules/retrieval/service.py": "d298422f967f1d23e90a26a96e942458fb93c5e8a18aeaff661aceeaa9f29dac",
+    "backend/app/modules/indexing/parser.py": "350bf7f959feb568b0a718df09e6bffefe8701d704c8fb03f6bfabaf4d374b2f",
+    "backend/app/modules/indexing/service.py": "c09cbedf75c482387033eceaf398346ba1597e2ccceeec742f7993f754bc2818"
+  },
+  "human_reviewed": false,
+  "documents": [
+    "docs/stage-5-test-cases.md",
+    "docs/stage-5-quality-fix-delivery.md"
+  ],
+  "checks": {
+    "backend_final_full": {
+      "passed": 145,
+      "failed": 0,
+      "seconds": 226.41,
+      "log": "artifacts/stage5-quality-tests-recheck.log"
+    },
+    "backend_first_full": {
+      "passed": 144,
+      "failed": 1,
+      "failing_case": "test_worker_publish_filter_sources_reindex_and_delete",
+      "log": "artifacts/stage5-quality-tests.log",
+      "root_cause": "not_reproduced"
+    },
+    "purge_targeted_recheck": {
+      "passed": 1,
+      "failed": 0
+    },
+    "frontend_behavior": {
+      "passed": 17
+    },
+    "frontend_typecheck": "passed",
+    "frontend_build": "passed",
+    "ruff_check": "passed",
+    "ruff_format": "passed",
+    "frozen_cases_hashes": "passed",
+    "source_positions_and_actual_answer_export": "passed",
+    "candidate_secret_scan": "passed",
+    "test_business_rows_and_points_zero": true
+  },
+  "deployment": {
+    "url": "http://127.0.0.1:8080/",
+    "mysql_port": 3307,
+    "api_source_hashes_match": true,
+    "actual_openapi_matches_snapshot": true,
+    "existing_identity_kb_membership_fingerprints_match": true,
+    "container_live_quality_regressions": 3,
+    "backup": "artifacts/backups/stage5-quality-before-deploy",
+    "backup_sha_verified": true,
+    "backup_restore_rehearsed": false,
+    "browser_manual_retested": false
+  }
+}

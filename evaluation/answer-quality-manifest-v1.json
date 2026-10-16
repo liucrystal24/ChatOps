@@ -1,0 +1,6 @@
+{
+  "cases_sha256": "3c354e2d9e482ebaeb5544a9b48caf0099471ba1eb720772653750451f10e782",
+  "case_count": 17,
+  "annotation": "Agent 在本轮真实模型调用前冻结的开发回归对照，非盲测、非人工标注",
+  "original_v2_unchanged": true
+}

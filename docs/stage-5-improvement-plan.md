@@ -114,4 +114,4 @@
 
 ## 生成质量的后续工程待办（仍属阶段5）
 
-人工审核暂留不表示已知生成错误可以仅记录后停止修复。日期事件、权限表格行和容量/数量绑定问题的分析与修复顺序见 [stage-5-answer-quality-plan.md](stage-5-answer-quality-plan.md)。包括语义对照回归、上下文证据表示、逐主张绑定及必要的生成模型对照；尚未实现或验证，不列为阶段6工作。
+人工审核暂留不表示已知生成错误可以仅记录后停止修复。日期事件、权限表格行和容量/数量绑定已完成证据摘录式工程修复；设计见 [stage-5-answer-quality-plan.md](stage-5-answer-quality-plan.md)，真实回归、取舍与剩余人工验收见 [stage-5-quality-fix-delivery.md](stage-5-quality-fix-delivery.md)。未更换模型，不列为阶段6工作。

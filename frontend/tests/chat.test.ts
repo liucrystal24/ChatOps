@@ -30,6 +30,13 @@ describe('流式问答', () => {
     expect(html).not.toContain('<img'); expect(html).toContain('<strong>粗体</strong>')
     expect(html).toContain('rel="noopener noreferrer"')
   })
+  it('证据摘录保留原文条件、单位和引用，摘录内 HTML 也不能执行', () => {
+    const html = renderMarkdown('> 每库容量500 MiB；永久错误不重试。\n> <script>alert(1)</script>\n\n[S1]')
+    expect(html).toContain('<blockquote>')
+    expect(html).toContain('500 MiB；永久错误不重试。')
+    expect(html).toContain('[S1]')
+    expect(html).not.toContain('<script>')
+  })
 
   async function setup(complete = true, earlyError = false, stall = false) {
     const conversation={id:'conv-1',kb_id:'kb-1',title:'培训',active_message_id:null}

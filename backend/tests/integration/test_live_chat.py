@@ -102,7 +102,9 @@ async def test_live_stream_followup_citations_and_abstention(bundle):
         assert "15分钟" not in answers[3].content.replace(" ", "")
         assert answers[3].citations
         assert answers[4].answer_type == "abstention" and not answers[4].citations
-        assert all(answer.usage for answer in answers)
+        assert all(answer.usage for answer in answers[:2])
+        # 日期事件在服务端过滤后可能无需生成调用，不能为拒答伪造 usage。
+        assert all(answer.timings["answer_mode"] == "extractive-v1" for answer in answers)
         await documents.delete(actor, str(uploaded.document.id))
         await worker.run_once()
     finally:
