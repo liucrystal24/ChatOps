@@ -146,7 +146,27 @@ def permitted(question, unit):
 
 
 def catalog(question, sources):
-    return [u for u in units(sources) if permitted(question, u)]
+    known = {s["source_label"]: s for s in sources}
+    seen, result = set(), []
+    for unit in units(sources):
+        if not permitted(question, unit):
+            continue
+        source = known[unit["source_label"]]
+        start = source.get("char_start")
+        if source.get("document_id") and source.get("index_version_id") and start is not None:
+            # 重叠表格窗口中的同一原文行只展示一次，保留排名靠前的合法来源。
+            key = (
+                source["document_id"],
+                source["index_version_id"],
+                source.get("page_no"),
+                tuple((start + a, start + b) for a, b in unit["spans"]),
+            )
+        else:
+            key = (unit["source_label"], tuple(tuple(span) for span in unit["spans"]))
+        if key not in seen:
+            result.append(unit)
+            seen.add(key)
+    return result
 
 
 def render_plan(raw, question, sources):

@@ -27,7 +27,7 @@ def table(headers, rows):
 def main(args):
     from evaluate_business import saved_usage_summary
 
-    from app.modules.chat.evidence import catalog
+    from app.modules.chat.evidence import units
 
     suite = ROOT / "evaluation/business-v1"
     report = json.loads(args.report.read_text())
@@ -46,9 +46,7 @@ def main(args):
     for row in report["rows"]:
         cid, answer = row["case_id"], row["content"]
         case, audit = cases[cid], audits[cid]
-        available = {
-            (u["source_label"], u["text"]) for u in catalog(row["retrieval_query"], row["sources"])
-        }
+        available = {(u["source_label"], u["text"]) for u in units(row["sources"])}
         for claim in audit["claims"]:
             assert (claim["source_label"], claim["quote"]) in available, cid
             claim_count += 1
@@ -101,18 +99,20 @@ def main(args):
             details.append(f"正确依据在回答后Top-20诊断中的排名：{ranks or '未出现'}。\n")
     document = [
         "# 虚构业务测试集：问题、实际答案与逐题审核\n",
-        "日期：2026-10-16。5篇原创虚构业务文章，36题；以下实际答案来自首次真实MySQL、Qdrant、Embedding和聊天模型运行，没有改写成参考答案。\n",
+        f"日期：2026-10-16。5篇原创虚构业务文章，36题；以下实际答案来自{args.label}真实MySQL、Qdrant、Embedding和聊天模型运行，没有改写成参考答案。\n",
         "审核者为Codex Agent，与文章/题集作者相同，属于工程复核，不是独立真人验收。"
         "‘正确’须满足问题的套餐、年份、属性、单位和条件；来源可访问或摘录原文一致仍可能答非所问。"
         "所有真人字段保留待复核。\n",
         "仅将 `evaluation/business-v1/corpus/` 下5篇文章导入知识库；"
         "不要导入题集、参考答案或审核结果。"
         "实际测试使用临时独立测试知识库，结束后清理；下列切片ID用于审计，原文文件一直保留。\n",
-        f"原始运行：`{args.report.relative_to(ROOT)}`；审核：`evaluation/business-v1/agent-review.json`。\n",
+        f"原始运行：`{args.report.relative_to(ROOT)}`；审核：`{args.review.relative_to(ROOT)}`。\n",
         *table(["题号", "问题", "实际回答", "预期答案", "原文依据与来源切片", "逐题审核"], rows),
         *details,
     ]
-    (ROOT / "docs/business-v1-test-cases.md").write_text("\n".join(document) + "\n")
+    if not re.fullmatch(r"[a-z0-9-]+", args.output_prefix):
+        raise ValueError("非法输出名称")
+    (ROOT / "docs" / (args.output_prefix + "-test-cases.md")).write_text("\n".join(document) + "\n")
     condensed = {k: v for k, v in report.items() if k != "rows"}
     condensed["baseline_report"] = str(args.report.relative_to(ROOT))
     condensed["baseline_sha256"] = review["baseline_sha256"]
@@ -136,7 +136,7 @@ def main(args):
     condensed["rows"] = [
         {k: v for k, v in row.items() if k != "diagnostic_candidates"} for row in report["rows"]
     ]
-    (suite / "results.json").write_text(json.dumps(condensed, ensure_ascii=False, indent=2) + "\n")
+    args.result.write_text(json.dumps(condensed, ensure_ascii=False, indent=2) + "\n")
     print("Exported", len(rows), "answers and verified", claim_count, "literal excerpts")
 
 
@@ -146,4 +146,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--review", type=Path, default=ROOT / "evaluation/business-v1/agent-review.json"
     )
+    parser.add_argument("--output-prefix", default="business-v1")
+    parser.add_argument("--label", default="首次")
+    parser.add_argument("--result", type=Path, default=ROOT / "evaluation/business-v1/results.json")
     main(parser.parse_args())

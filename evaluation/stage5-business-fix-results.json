@@ -1,0 +1,229 @@
+{
+  "date": "2026-10-16",
+  "reports": {
+    "before": {
+      "path": "evaluation/outputs/20261015T162227Z-business-v1/report.json",
+      "sha256": "3a9e9dc1f908cb269585f7dd7f423efd2b98e3b23066ed528d49032b1683db5e"
+    },
+    "generation_only": {
+      "path": "evaluation/outputs/20261016T035817Z-business-v1/report.json",
+      "sha256": "02fc3145312d859225f6929b0b1c7c2e00604cbca975f11efe17bcded47ca682"
+    },
+    "fields_experiment": {
+      "path": "evaluation/outputs/20261016T040312Z-business-v1/report.json",
+      "sha256": "9dbadab9c8f7d6c73bbb2d4985a7270adb62fb234ff84016a3a702d38e19d0fa"
+    },
+    "rows_experiment": {
+      "path": "evaluation/outputs/20261016T040724Z-business-v1/report.json",
+      "sha256": "951993b706fc716392cb6ccbb4b8f2d447eaa3de368359ce6b2959ce4f0f0f26"
+    },
+    "business_final": {
+      "path": "evaluation/outputs/20261016T044752Z-business-v1/report.json",
+      "sha256": "f76c2a3c3d60834490f56e3c6e74a98b8621d5675052f79891ecb84215c88b03"
+    },
+    "original_40": {
+      "path": "evaluation/outputs/20261016T045227Z-all/report.json",
+      "sha256": "36e4a3ce080f3958fa3eced2f7d9f8bb5ff47a6c4888ffe2396655a14ee26642"
+    },
+    "old_fixed": {
+      "path": "evaluation/outputs/20261016T045224Z-quality/report.json",
+      "sha256": "6c8d5037d5787a2c03bd683fa68bdfa01fe4cdbaf195ffbb00d7e2b951c73a8f"
+    },
+    "new_20": {
+      "path": "evaluation/outputs/20261016T044749Z-quality/report.json",
+      "sha256": "086c4574edc74432bbb99ef0b616d7704b882214d7d85057ce0db1e6e2c23d4b"
+    }
+  },
+  "business_before_agent_correct": 32,
+  "business_final_agent_correct": 36,
+  "agent_review": "evaluation/business-v1/agent-review-fixed.json",
+  "business_final_summary": {
+    "evidence": {
+      "hits": 35,
+      "total": 35,
+      "recall_at_5": 1.0,
+      "complete_questions": 30,
+      "answerable_questions": 30,
+      "human_annotation_reviewed": false
+    },
+    "completed": 36,
+    "failures": 0,
+    "unanswerable_abstentions": 6,
+    "unanswerable_total": 6,
+    "false_abstentions": 0,
+    "valid_citations": 34,
+    "citations_total": 34,
+    "human_correctness": null,
+    "human_fact_support": null
+  },
+  "business_final_calls": {
+    "chat_http": 42,
+    "embedding_http": 83,
+    "requests_with_usage": 42,
+    "prompt_tokens": 34630,
+    "completion_tokens": 388
+  },
+  "business_final_chunks": 47,
+  "original_40_summary": {
+    "n": 40,
+    "completed": 40,
+    "failures": 0,
+    "evidence_recall_at_5": {
+      "hits": 27,
+      "total": 28,
+      "value": 0.9642857142857143
+    },
+    "citations": {
+      "valid": 34,
+      "total": 34,
+      "validity": 1.0
+    },
+    "abstention": {
+      "true": 12,
+      "unanswerable": 12,
+      "recall": 1.0,
+      "false_abstentions": 0,
+      "precision": 1.0
+    },
+    "reference_fact_presence_proxy": 0.9285714285714286,
+    "human_correctness": null,
+    "human_fact_support": null,
+    "latency": {
+      "retrieval_ms": {
+        "p50": 384.27,
+        "p95": 541.81,
+        "n": 40
+      },
+      "rewrite_ms": {
+        "p50": 1122.63,
+        "p95": 1259.38,
+        "n": 6
+      },
+      "evidence_check_ms": {
+        "p50": null,
+        "p95": null,
+        "n": 0
+      },
+      "first_token_ms": {
+        "p50": 1963.58,
+        "p95": 6269.74,
+        "n": 40
+      },
+      "total_ms": {
+        "p50": 2053.41,
+        "p95": 6343.93,
+        "n": 40
+      }
+    },
+    "answer_usage": {
+      "prompt_tokens": 53987,
+      "completion_tokens": 330,
+      "requests_with_usage": 39
+    }
+  },
+  "original_legacy_v1": {
+    "n": 30,
+    "completed": 30,
+    "failures": 0,
+    "evidence_recall_at_5": {
+      "hits": 21,
+      "total": 22,
+      "value": 0.9545454545454546
+    },
+    "citations": {
+      "valid": 26,
+      "total": 26,
+      "validity": 1.0
+    },
+    "abstention": {
+      "true": 8,
+      "unanswerable": 8,
+      "recall": 1.0,
+      "false_abstentions": 0,
+      "precision": 1.0
+    },
+    "reference_fact_presence_proxy": 1.0,
+    "human_correctness": null,
+    "human_fact_support": null,
+    "latency": {
+      "retrieval_ms": {
+        "p50": 384.27,
+        "p95": 541.81,
+        "n": 30
+      },
+      "rewrite_ms": {
+        "p50": 1122.63,
+        "p95": 1259.38,
+        "n": 6
+      },
+      "evidence_check_ms": {
+        "p50": null,
+        "p95": null,
+        "n": 0
+      },
+      "first_token_ms": {
+        "p50": 2531.57,
+        "p95": 6269.74,
+        "n": 30
+      },
+      "total_ms": {
+        "p50": 2620.43,
+        "p95": 6343.93,
+        "n": 30
+      }
+    },
+    "answer_usage": {
+      "prompt_tokens": 37959,
+      "completion_tokens": 247,
+      "requests_with_usage": 29
+    }
+  },
+  "original_v2": {
+    "hits": 41,
+    "total": 41,
+    "recall_at_5": 1.0,
+    "complete_questions": 28,
+    "answerable_questions": 28,
+    "human_annotation_reviewed": false
+  },
+  "old_fixed": {
+    "total": 21,
+    "passed": 21,
+    "human_correctness": null
+  },
+  "new_fixed": {
+    "total": 20,
+    "passed": 20,
+    "human_correctness": null
+  },
+  "checks": {
+    "backend_full_passed": 175,
+    "backend_full_failed": 0,
+    "backend_seconds": 301.73,
+    "frontend_behavior_passed": 18,
+    "frontend_typecheck": "passed",
+    "frontend_build": "passed",
+    "ruff": "passed",
+    "format": "passed",
+    "actual_openapi_matches": true,
+    "source_hashes_match": true,
+    "container_generation_checks": 4,
+    "existing_user_kb_membership_fingerprint_preserved": true,
+    "mysql_port": 3307,
+    "backup_sha_verified": true,
+    "backup_restore_repeated": false,
+    "test_business_rows_zero": true,
+    "test_vectors_zero": true,
+    "browser_manual_repeated": false
+  },
+  "human_correctness": null,
+  "human_fact_support": null,
+  "phase6_started": false,
+  "deployment": {
+    "url": "http://127.0.0.1:8080/",
+    "answer_mode": "extractive-v2",
+    "index_representation": "table-rows-v2",
+    "backup": "artifacts/backups/stage5-business-before-deploy",
+    "existing_documents_automatically_reindexed": false
+  }
+}

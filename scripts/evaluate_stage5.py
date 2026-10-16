@@ -296,6 +296,10 @@ async def run(args):
             for p in [
                 ROOT / "scripts/stage5_metrics.py",
                 ROOT / "backend/app/modules/chat/evidence.py",
+                ROOT / "backend/app/modules/chat/constraints.py",
+                ROOT / "backend/app/modules/documents/markdown_tables.py",
+                ROOT / "backend/app/modules/indexing/representation.py",
+                ROOT / "backend/app/core/config.py",
                 ROOT / "scripts/evaluate_stage5.py",
                 ROOT / "backend/app/modules/retrieval/service.py",
                 ROOT / "backend/app/modules/indexing/parser.py",
@@ -561,6 +565,7 @@ def main():
         "CHUNK_OVERLAP",
         "CHUNK_STRUCTURE",
         "EMBEDDING_TITLE_CONTEXT",
+        "EMBEDDING_TABLE_CONTEXT",
     ):
         if name in os.environ:
             values[name] = os.environ[name]

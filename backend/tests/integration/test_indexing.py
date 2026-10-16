@@ -426,14 +426,22 @@ async def test_new_representation_rebuild_keeps_raw_sources_and_failed_rebuild_k
     b, documents, worker, embedding, vectors, actor, kb_id = indexing
     raw = "# 规则\n\n## 上传\n\n1. 必须验证权限。\n2. 文件大小有限制。\n"
     worker.settings = b.settings.model_copy(
-        update={"chunk_structure": "recursive-v1", "embedding_title_context": False}
+        update={
+            "chunk_structure": "recursive-v1",
+            "embedding_title_context": False,
+            "embedding_table_context": False,
+        }
     )
     uploaded = await upload(indexing, raw, "规则.md")
     document_id = str(uploaded.document.id)
     await worker.run_once()
     old = (await documents.get(actor, document_id)).active_index_version_id
     worker.settings = b.settings.model_copy(
-        update={"chunk_structure": "paragraph-v2", "embedding_title_context": True}
+        update={
+            "chunk_structure": "paragraph-v2",
+            "embedding_title_context": True,
+            "embedding_table_context": False,
+        }
     )
     inputs = []
     original = embedding.embed
@@ -473,3 +481,51 @@ async def test_new_representation_rebuild_keeps_raw_sources_and_failed_rebuild_k
     await worker.run_once()
     after = await documents.get(actor, document_id)
     assert after.latest_job.status == "failed" and after.active_index_version_id == current
+
+
+async def test_table_fields_rebuild_preserves_source_acl_and_failed_version(indexing):
+    b, documents, worker, embedding, vectors, actor, kb_id = indexing
+    raw = "# 业务权限\n\n| 操作 | 权限 |\n| --- | --- |\n| 导出账单 | owner；须先审批 |\n"
+    worker.settings = b.settings.model_copy(update={"embedding_table_context": False})
+    uploaded = await upload(indexing, raw, "业务权限.md")
+    document_id = str(uploaded.document.id)
+    await worker.run_once()
+    old = (await documents.get(actor, document_id)).active_index_version_id
+    worker.settings = b.settings.model_copy(update={"embedding_table_context": True})
+    inputs = []
+    original = embedding.embed
+
+    async def capture(texts, dimension=None):
+        inputs.extend(texts)
+        return await original(texts, dimension)
+
+    embedding.embed = capture
+    await documents.reindex(actor, document_id)
+    await worker.run_once()
+    current = (await documents.get(actor, document_id)).active_index_version_id
+    assert current != old
+    assert any("操作：导出账单；权限：owner；须先审批" in value for value in inputs)
+    async with b.database.transaction() as repo:
+        version = await repo.version(str(current))
+        assert version.config_snapshot["document_representation"] == "table-rows-v2"
+        chunks = (
+            await repo.session.scalars(select(Chunk).where(Chunk.index_version_id == str(current)))
+        ).all()
+        assert all(raw[c.char_start : c.char_end] == c.text for c in chunks)
+        assert all(c.metadata_json["document_representation"] == "table-rows-v2" for c in chunks)
+    retrieval = RetrievalService(b.database, embedding, vectors, b.settings)
+    hits = await retrieval.search(actor, kb_id, RetrievalInput(question="导出账单需要什么条件？"))
+    assert hits and all(h["index_version_id"] == str(current) for h in hits)
+    assert any("| 导出账单 |" in h["text"] for h in hits)
+    assert all("操作：导出账单" not in h["text"] for h in hits)
+    with pytest.raises(AppError):
+        await retrieval.search(str(b.users["bob"].id), kb_id, RetrievalInput(question="导出账单"))
+
+    async def failure(texts, dimension=None):
+        raise IndexFailure("EMBEDDING_REQUEST_REJECTED", "测试故障")
+
+    embedding.embed = failure
+    await documents.reindex(actor, document_id)
+    await worker.run_once()
+    failed = await documents.get(actor, document_id)
+    assert failed.latest_job.status == "failed" and failed.active_index_version_id == current

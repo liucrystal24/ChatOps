@@ -164,7 +164,7 @@ HTTP 响应开始前完成身份、参数、会话、生成槽、模型配置等
 
 候选来源字段：`source_label, chunk_id, document_id, index_version_id, filename, page_no?, section_title?, excerpt, retrieval_score, rerank_score?`；excerpt 为已鉴权、长度受限的正文。客户端链接必须走受保护接口，不使用内部文件 URL。
 
-done 的 `status="completed"`；`answer_type` 为 `answer` 或 `abstention`；citations 仅包含服务端验证存在于本轮候选的来源。未知引用、需要证据的回答缺少有效引用时，发送 `CITATION_INVALID` error 并将消息设 failed，不发送 done；不能伪造来源来补齐。模型证据选择 JSON 非法、编号未知或重复时返回 `ANSWER_PLAN_INVALID`，校验前不发送答案 delta。usage 无供应商数据时 NULL（包括过滤后无可用证据、未调用生成模型的拒答），timings 区分检索、首段可展示文本和总耗时；`first_token_ms` 包含完整证据选择与验证时间，非供应商首 token 延迟。`answer_mode=extractive-v2` 标识本轮摘录模式。
+done的 `status="completed"`；`answer_type`为answer或abstention；citations仅含本轮已授权且验证的来源。未知服务端引用、缺引用时返回CITATION_INVALID并保存failed，不发done；不能补造来源。摘录内旧[Sx]是原文数据，不计为本轮引用。模型选择JSON非法、编号未知或重复时返回ANSWER_PLAN_INVALID，校验前不发答案delta。usage无供应商数据时NULL（包括过滤后直接拒答），first_token_ms包含完整选择与校验时间，非供应商首token。新消息answer_mode=extractive-v2，历史v1不重写。v2支持简单普通/权限表原文行，并对显式对象/属性作有限检查；缺可验证依据固定拒答，不能将此宣称为任意自然语言的事实证明。事件结构和事务后done不变。
 
 示意事件：
 
@@ -218,6 +218,3 @@ data: {"message_id":"<uuid>","status":"completed","answer_type":"abstention","ci
 阶段 5 已实现补充：Conversation 返回 `id,kb_id,title,active_message_id,created_at,updated_at`；列表 `{items,next_cursor}`，使用通用 limit/cursor，conversation 列表可选 kb_id。Message 返回 id/conversation_id/sequence_no/role/status/content/client_request_id/reply_to_message_id/answer_type/error_code/citations/usage/timings/created_at/completed_at；不返回内部模型配置或未验证候选。消息分页按创建时间倒序，前端按 sequence_no 显示。历史引用返回 source_label/chunk_id/document_id/index_version_id/available/filename/page_no/section_title；失效时定位字段为 null，不通过快照泄露已删除资料。
 
 来源 excerpt 最多 2,000 字符，并返回 char_start/char_end；done 中的引用是本轮最终来源，GET 消息时另算当前 available。明确拒答的无引用模型草稿可被保守压缩为固定拒答句，done 后以消息事实替换流中草稿。其他未知或缺少引用仍失败。新错误包括 CONTEXT_TOKEN_LIMIT(422)、TOKENIZER_UNAVAILABLE(503)、CONVERSATION_BUSY/REQUEST_ALREADY_EXISTS(409)，后两者 details.message_id 可用于读取状态；流内还可能返回 SOURCE_CHANGED、GENERATION_TIMEOUT/INTERRUPTED/FAILED、MODEL_REQUEST_REJECTED/OUTPUT_INCOMPLETE/STREAM_INCOMPLETE/RESPONSE_INVALID、UPSTREAM_UNAVAILABLE/TIMEOUT。SSE error 不保证此前已收到 start，客户端使用其 message_id 核验。
-
-
-本节点新增简单普通表格原文行和显式套餐/角色/属性校验，无法支持所问属性时拒答；逐行索引和最终验收记录见后续节点。

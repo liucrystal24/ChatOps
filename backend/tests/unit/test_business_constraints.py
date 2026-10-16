@@ -98,3 +98,18 @@ def test_raw_source_reference_is_not_a_server_citation():
     s = {"source_label": "S1"}
     assert validate_answer("> 原文旧引用 [S99]。\n\n[S1]", [s]) == ("answer", [s])
 
+
+def test_overlapping_table_windows_deduplicate_only_same_original_location():
+    head = "| 项目 | 上限 |\n| --- | --- |\n"
+    row1, row2 = "| CSV | 1200行 |", "\n| PDF | 600行 |"
+    common = dict(document_id="doc", index_version_id="v1", char_start=100, page_no=None)
+    sources = [
+        dict(common, source_label="S1", excerpt=head + row1),
+        dict(common, source_label="S2", excerpt=head + row1 + row2),
+    ]
+    c = catalog("CSV上限？", sources)
+    assert len(c) == 1 and c[0]["source_label"] == "S1"
+    c = catalog("PDF上限？", sources)
+    assert len(c) == 1 and c[0]["source_label"] == "S2"
+    sources[1]["index_version_id"] = "v2"
+    assert len(catalog("CSV上限？", sources)) == 2

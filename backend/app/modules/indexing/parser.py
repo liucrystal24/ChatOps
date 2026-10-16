@@ -10,6 +10,7 @@ from pypdf import PdfReader
 
 from app.infrastructure.tokenization import load_tokenizer
 from app.modules.indexing.errors import IndexFailure
+from app.modules.indexing.representation import embedding_text, row_windows
 
 
 def parse(
@@ -20,6 +21,7 @@ def parse(
     overlap=120,
     structure="recursive-v1",
     title_context=False,
+    table_context=False,
 ):
     if overlap >= chunk_size:
         raise IndexFailure("CHUNK_CONFIG_INVALID", "重叠长度必须小于切分长度")
@@ -58,7 +60,14 @@ def parse(
         ranges = (
             paragraph_ranges(text, headings) if structure == "paragraph-v2" else [(0, len(text))]
         )
-        for block_start, block_end in ranges:
+        windows = [
+            window
+            for a, b in ranges
+            for window in (
+                row_windows(text, a, b, chunk_size) if table_context else [(a, b, False)]
+            )
+        ]
+        for block_start, block_end, target_row in windows:
             for part in splitter.create_documents([text[block_start:block_end]]):
                 start = block_start + part.metadata["start_index"]
                 if (
@@ -73,9 +82,9 @@ def parse(
                     )
                     title = legacy[-1][1][:255] if legacy else None
                 token_count = len(tokenizer.encode(part.page_content).ids)
-                represented = (
-                    "章节：" + title + "\n" if title_context and title else ""
-                ) + part.page_content
+                represented = embedding_text(
+                    part.page_content, title, title_context, table_context, target_row
+                )
                 if len(tokenizer.encode(represented).ids) > 8192:
                     raise IndexFailure("CHUNK_TOKEN_LIMIT", "正文片段超过模型 token 上限")
                 chunks.append(
@@ -86,6 +95,7 @@ def parse(
                         char_start=start,
                         char_end=start + len(part.page_content),
                         token_count=token_count,
+                        **({"table_row": True} if target_row else {}),
                     )
                 )
                 if len(chunks) > 5000:
@@ -173,6 +183,7 @@ def main():
             int(sys.argv[5]),
             sys.argv[6] if len(sys.argv) > 6 else "recursive-v1",
             len(sys.argv) > 7 and sys.argv[7] == "true",
+            len(sys.argv) > 8 and sys.argv[8] == "true",
         )
         result = {"chunks": chunks}
     except IndexFailure as exc:

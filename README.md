@@ -2,9 +2,11 @@
 
 面向本地部署和技术展示的模块化单体，按阶段实现权限隔离、文档索引、可追溯问答与可复现评测。
 
-**阶段 5：真实多轮问答及补充质量修复已实现，人工质量验收待完成。** 已接入文档索引、云端 `BAAI/bge-m3` + `Qwen/Qwen3-8B`、会话历史、SSE、权限复核和来源引用。已知日期/权限/容量误答改为证据选择与原文摘录校验；最终40题中，原22题指定证据召回22/22，12道无答案题全部拒答。实际检查与边界见[质量修复交付](docs/stage-5-quality-fix-delivery.md)，逐题回答和原文见[测试用例对照表](docs/stage-5-test-cases.md)；人工正确率/事实支持率尚未审核，暂不标记MVP全部验收通过。
+**阶段5：真实多轮问答及业务质量修复已实现，独立人工验收待完成。** 已接入云端BAAI/bge-m3、Qwen/Qwen3-8B、SSE、权限复核与引用。最新业务36题回归Agent判断36/36正确；完整原始/修复后结果、双口径召回差异及能力边界见[业务修复交付](docs/stage-5-business-fix-delivery.md)。工程测试通过不代替真人正确率/事实支持率验收，暂不标记MVP整体完成。
 
 2026-10-16新增5篇原创虚构业务文章与36题压力测试：Agent逐题判断32题正确、4题错误，暴露普通表格、套餐/角色/属性错配等阶段5待办；原文一致与引用可访问仍不能保证答对。见[业务集审核与解决方案](docs/business-v1-quality-review.md)、[36题实际回答表](docs/business-v1-test-cases.md)。该合成测试不是独立真人或真实客户资料验收。
+
+上述4题已完成补充工程修复：业务36题回归Agent判断36/36正确，证据35/35，6道无答案全部拒答；后端175项、前端18项通过。新输入20条固定上下文断言通过。原40题v2证据仍41/41，v1指定来源口径降至21/22（s14使用已预先标注的API等价来源，原因单列）。完整取舍、前后回答及仍待真人验收的边界见[阶段5业务修复交付](docs/stage-5-business-fix-delivery.md)和[修复后36题表](docs/business-v1-fixed-test-cases.md)。
 
 ## 启动与升级
 
@@ -178,6 +180,3 @@ docker compose --env-file .env.stage5-test -p chat-rag-stage5-test down
 固定公开题集运行方式见 evaluation/README.md；真实报告在忽略提交的 evaluation/outputs。初版标注由 Agent 起草，不能冒充用户人工质量验收。阶段5质量门槛通过前不进入阶段6的 Hybrid/Rerank 实现。
 
 本机已为 Navicat 开放 3307 时，升级也应叠加相同开发配置以保留端口：`docker compose -f compose.yaml -f compose.dev.yaml up --build -d --wait`。本轮更新现有实例采用先运行 migrate，再仅重建 API/Worker/Web，保留原 MySQL/Qdrant 容器及数据卷。
-
-
-本回溯节点先包含普通表格与对象/属性修复；索引排名优化和最终回归在后续提交，不将本节点当作最终交付。

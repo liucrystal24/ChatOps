@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     parser_timeout_seconds: int = Field(default=60, ge=1, le=120)
     chunk_structure: Literal["recursive-v1", "paragraph-v2"] = "paragraph-v2"
     embedding_title_context: bool = False
+    embedding_table_context: bool = True
     chunk_size: int = Field(default=800, ge=100, le=2000)
     chunk_overlap: int = Field(default=120, ge=0, le=500)
 

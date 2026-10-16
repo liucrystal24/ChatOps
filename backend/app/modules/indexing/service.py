@@ -12,6 +12,7 @@ from app.core.embedding_profile import TOKENIZER_REVISION
 from app.infrastructure.models import Chunk, IndexVersion
 from app.modules.documents.service import new_job
 from app.modules.indexing.errors import IndexFailure, LeaseLost
+from app.modules.indexing.representation import embedding_text, representation_name
 
 logger = logging.getLogger("chat_rag.indexing")
 
@@ -38,9 +39,9 @@ class IndexingService:
         return {
             "parser": "pypdf-utf8-v1",
             "splitter": self.settings.chunk_structure,
-            "document_representation": "heading-body-v2"
-            if self.settings.embedding_title_context
-            else "body-v1",
+            "document_representation": representation_name(
+                self.settings.embedding_title_context, self.settings.embedding_table_context
+            ),
             "chunk_size": self.settings.chunk_size,
             "chunk_overlap": self.settings.chunk_overlap,
             "tokenizer_revision": TOKENIZER_REVISION,
@@ -159,6 +160,7 @@ class IndexingService:
             str(self.settings.chunk_overlap),
             self.settings.chunk_structure,
             str(self.settings.embedding_title_context).lower(),
+            str(self.settings.embedding_table_context).lower(),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.DEVNULL,
         )
@@ -221,9 +223,11 @@ class IndexingService:
                     ordinal=ordinal,
                     text_sha256=hashlib.sha256(part["text"].encode()).hexdigest(),
                     metadata_json={
-                        "document_representation": "heading-body-v2"
-                        if self.settings.embedding_title_context
-                        else "body-v1"
+                        "table_row": part.pop("table_row", False),
+                        "document_representation": representation_name(
+                            self.settings.embedding_title_context,
+                            self.settings.embedding_table_context,
+                        ),
                     },
                     **part,
                 )
@@ -238,12 +242,13 @@ class IndexingService:
             batch = chunks[start : start + size]
             vectors = await self.embedding.embed(
                 [
-                    (
-                        "章节：" + c.section_title + "\n"
-                        if self.settings.embedding_title_context and c.section_title
-                        else ""
+                    embedding_text(
+                        c.text,
+                        c.section_title,
+                        self.settings.embedding_title_context,
+                        self.settings.embedding_table_context,
+                        c.metadata_json.get("table_row", False),
                     )
-                    + c.text
                     for c in batch
                 ],
                 profile["dimension"],

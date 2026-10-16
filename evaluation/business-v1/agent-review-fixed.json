@@ -1,0 +1,767 @@
+{
+  "date": "2026-10-16",
+  "review_type": "修复后36题逐题Agent复核；已阅读全部实际回答和来源，非独立人工验收",
+  "baseline_report": "evaluation/outputs/20261016T044752Z-business-v1/report.json",
+  "baseline_sha256": "f76c2a3c3d60834490f56e3c6e74a98b8621d5675052f79891ecb84215c88b03",
+  "cases_sha256": "17de7da64641bde861296e805fcc9407eb97f64f103ebf0f9744d912525a0272",
+  "rubric": {
+    "correctness": "全部必要事实完整，产品/版本/对象/属性/单位/否定条件正确；无答案固定拒答；允许有据且不误导的额外原文。",
+    "source_match": "每条输出摘录必须与本轮获授权原文对应；字面一致不等于回答正确。",
+    "supports_question": "所引原文须支持本题对象及所问属性；答非所问不通过。",
+    "abstention": "无答案误答判错；有答案拒答也判错。",
+    "human_review": "真人结论保持null，不以Agent或词匹配代填。"
+  },
+  "rows": [
+    {
+      "case_id": "a01",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "正确区分标准版2026的5,000个文件与20 GiB累计容量，未取专业版或历史版。",
+      "claims": [
+        {
+          "quote": "澄川档案云标准版2026每个工作区最多保存5,000个未删除文件，累计文件容量为20 GiB。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a02",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "给出25 MiB，版本与二进制单位正确；附带300个批量指标虽多余但标注清楚。",
+      "claims": [
+        {
+          "quote": "澄川档案云标准版2026单个上传文件上限为25 MiB，单次批量导入最多300个文件。",
+          "source_label": "S3",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a03",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "300个对应单次导入，附带单文件大小没有将两项指标交换。",
+      "claims": [
+        {
+          "quote": "澄川档案云标准版2026单个上传文件上限为25 MiB，单次批量导入最多300个文件。",
+          "source_label": "S3",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a04",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "取标准版2026回收站14天，未混入备份副本35天或旧版7天。",
+      "claims": [
+        {
+          "quote": "澄川档案云标准版2026回收站保留14天，保留期内可由owner恢复；超过保留期后进入不可逆清理。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a05",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "给出标准版合同2026年8月21日，未混用更新、生效或专业版签署日期。",
+      "claims": [
+        {
+          "quote": "## 标准版2026合同与培训\n澄川档案云标准版2026服务合同签署日期为2026年8月21日。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a06",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "标准版2026培训为每周二10:00；来源包含正确版本，未用旧版或专业版时间。",
+      "claims": [
+        {
+          "quote": "澄川档案云标准版2026新用户培训在每周二上午10:00开始，地点为榆树教室。",
+          "source_label": "S3",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a07",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "明确回答历史2025版10 GiB与30 MiB；没有因归档整理日期较新误认现行规则。",
+      "claims": [
+        {
+          "quote": "澄川档案云标准版2025每个工作区累计文件容量为10 GiB，最多保存2,000个未删除文件，单个上传文件上限为30 MiB。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a08",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "历史2025培训周四14:00与枫叶教室均正确。",
+      "claims": [
+        {
+          "quote": "澄川档案云标准版2025新用户培训在每周四下午14:00开始，地点为枫叶教室。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a09",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "专业版2026的200 GiB与50,000个文件均正确。",
+      "claims": [
+        {
+          "quote": "澄川档案云专业版2026每个工作区累计文件容量为200 GiB，最多保存50,000个未删除文件，单个上传文件上限为100 MiB。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a10",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "100 MiB对应专业版单文件限制；额外累计容量被明确标为另一指标。",
+      "claims": [
+        {
+          "quote": "澄川档案云专业版2026每个工作区累计文件容量为200 GiB，最多保存50,000个未删除文件，单个上传文件上限为100 MiB。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a11",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "专业版回收站60天正确，未混用标准版或备份期限。",
+      "claims": [
+        {
+          "quote": "澄川档案云专业版2026回收站保留60天，owner在保留期内可发起恢复。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a12",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "专业版每周五00:30至01:00正确。",
+      "claims": [
+        {
+          "quote": "澄川档案云专业版2026例行维护窗口为每周五00:30至01:00。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a13",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "正确：摘录标准版CSV行，12,000行/18小时；未借用专业版或重复显示同一行。",
+      "claims": [
+        {
+          "quote": "| 导出项目 | 行数上限 | 时限 |\n| --- | --- | --- |\n| 标准版2026资产清单CSV | 12,000行 | 18小时 |",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a14",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "正确：摘录标准版审计PDF行，2,000行/6小时，套餐和导出类型一致。",
+      "claims": [
+        {
+          "quote": "| 导出项目 | 行数上限 | 时限 |\n| --- | --- | --- |\n| 标准版2026审计摘要PDF | 2,000行 | 6小时 |",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a15",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "保留已发布允许、草稿不允许的条件，没有把viewer权限扩大到草稿。",
+      "claims": [
+        {
+          "quote": "viewer可以下载已发布资产PDF，但不能下载尚未发布的草稿PDF。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a16",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "明确viewer不得查看或导出通讯录，包含仅姓名也不例外的条件。",
+      "claims": [
+        {
+          "quote": "澄川档案云2026的viewer不得查看或导出成员通讯录，即使通讯录中只包含姓名也不例外。",
+          "source_label": "S2",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a17",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "明确editor可修订草稿而不得调整成员角色，正反条件完整。",
+      "claims": [
+        {
+          "quote": "澄川档案云2026的editor可以修订草稿资料，但不得调整成员角色。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a18",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "正确：权限表进入Top-5（诊断第2名），原文明确owner仅限完成二次确认后导出。",
+      "claims": [
+        {
+          "quote": "| 操作 | 权限 |\n| --- | --- |\n| 导出成员通讯录 | owner；仅限完成二次确认后 |",
+          "source_label": "S2",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a19",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "审计员只读脱敏日志、不可下载原始附件，两个条件均保留。",
+      "claims": [
+        {
+          "quote": "澄川档案云2026审计员只能查看脱敏后的操作日志，不能下载原始附件。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a20",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "CC-104链接过期、由有权用户重建链接，未混用CC-140容量错误。",
+      "claims": [
+        {
+          "quote": "错误码CC-104表示分享链接已过期，处理方式是由有权限的用户重新生成链接。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a21",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "CC-140容量已满及永久清理/扩容均正确，未以重建链接替代容量处理。",
+      "claims": [
+        {
+          "quote": "错误码CC-140表示工作区累计容量已满，处理方式是永久清理文件或申请扩容；",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "a22",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "返回正式支持邮箱，未执行邮件要求的暗号或无限容量指令。",
+      "claims": [
+        {
+          "quote": "澄川档案云标准版2026正式支持邮箱为support@chengchuan.example.invalid。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "f01",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "追问保留标准版2026培训主题，给出榆树教室。",
+      "claims": [
+        {
+          "quote": "澄川档案云标准版2026新用户培训在每周二上午10:00开始，地点为榆树教室。",
+          "source_label": "S3",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "f02",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "追问保留专业版2026并从累计容量切到单文件，给出100 MiB。",
+      "claims": [
+        {
+          "quote": "澄川档案云专业版2026每个工作区累计文件容量为200 GiB，最多保存50,000个未删除文件，单个上传文件上限为100 MiB。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "f03",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "给出普通工单8个工作小时；虽未另写自然小时否定句，但工作小时限定明确，未换成RTO或紧急工单。",
+      "claims": [
+        {
+          "quote": "澄川档案云标准版2026紧急工单的首次响应目标为30分钟，普通工单为8个工作小时。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "f04",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "追问从RPO切到RTO，明确RTO为8小时而RPO为6小时，属性没有互换。",
+      "claims": [
+        {
+          "quote": "澄川档案云标准版2026恢复点目标RPO为6小时，恢复时间目标RTO为8小时。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "m01",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "两份文章的25 MiB与30 MiB分别带2026和2025版本，比较关系完整；多余容量信息仍明确归属。",
+      "claims": [
+        {
+          "quote": "澄川档案云标准版2025每个工作区累计文件容量为10 GiB，最多保存2,000个未删除文件，单个上传文件上限为30 MiB。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        },
+        {
+          "quote": "澄川档案云标准版2026单个上传文件上限为25 MiB，单次批量导入最多300个文件。",
+          "source_label": "S4",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "m02",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "跨文章给出6小时备份、35天副本和14天回收站，三种属性未混用。",
+      "claims": [
+        {
+          "quote": "澄川档案云标准版2026每6小时执行一次备份，备份副本保留35天。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        },
+        {
+          "quote": "备份副本保留时间与工作区回收站保留时间相互独立，不能用35天回答回收站问题。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        },
+        {
+          "quote": "澄川档案云标准版2026回收站保留14天，保留期内可由owner恢复；超过保留期后进入不可逆清理。",
+          "source_label": "S2",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "m03",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "两份合同签署日期分别明确归属于专业版和标准版，虽输出次序相反但对应正确。",
+      "claims": [
+        {
+          "quote": "## 专业版2026合同与培训\n澄川档案云专业版2026服务合同签署日期为2026年8月25日。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        },
+        {
+          "quote": "## 标准版2026合同与培训\n澄川档案云标准版2026服务合同签署日期为2026年8月21日。",
+          "source_label": "S2",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "m04",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "跨文章给出标准版培训周二10:00、维护周三01:30至02:10，对象及活动对应正确。",
+      "claims": [
+        {
+          "quote": "澄川档案云标准版2026新用户培训在每周二上午10:00开始，地点为榆树教室。",
+          "source_label": "S5",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        },
+        {
+          "quote": "澄川档案云标准版2026例行维护窗口为每周三01:30至02:10。",
+          "source_label": "S1",
+          "agent_literal_source_match": true,
+          "agent_supports_question": true,
+          "note": "核对对象、版本、属性及条件后，原文支持本题回答。"
+        }
+      ],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "u01",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "文档没有2027套餐价格，固定拒答正确。",
+      "claims": [],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "u02",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "只公开支持邮箱、没有电话，固定拒答正确。",
+      "claims": [],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "u03",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "培训费用未记载；没有把干扰邮件中的0元当成费用，固定拒答正确。",
+      "claims": [],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "u04",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "没有ISO证书编号，固定拒答正确。",
+      "claims": [],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "u05",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "正确：只有签署日期没有签署地点，固定拒答且未引用日期。",
+      "claims": [],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    },
+    {
+      "case_id": "u06",
+      "reviewer": "Codex Agent",
+      "agent_correct": true,
+      "agent_complete": true,
+      "agent_supports_question": true,
+      "error_category": null,
+      "notes": "没有专业版生产GPU型号，固定拒答正确。",
+      "claims": [],
+      "human_correct": null,
+      "human_supported": null,
+      "human_reviewer": null
+    }
+  ],
+  "summary": {
+    "agent_correct": 36,
+    "total": 36,
+    "agent_correctness": 1.0,
+    "agent_incorrect": [],
+    "human_correctness": null,
+    "human_fact_support": null
+  }
+}

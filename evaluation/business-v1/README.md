@@ -14,6 +14,8 @@
 
 交付文档：[36题实际回答与逐题审核](../../docs/business-v1-test-cases.md)、[质量结论与原因/方案](../../docs/business-v1-quality-review.md)。首次运行Agent判断32/36正确，4题错误；真人评分未代填。原始报告保留，汇总见results.json。
 
+修复后回归：Agent逐题36/36正确，参考证据35/35，无答案6/6拒答。见[修复交付](../../docs/stage-5-business-fix-delivery.md)、[修复后答案表](../../docs/business-v1-fixed-test-cases.md)、results-fixed.json及agent-review-fixed.json。首轮文件保留，不将回归称为独立盲测。
+
 参考范本（2026-10-16核对）：
 
 - [RGB官方实现](https://github.com/chen700564/RGB)：参考噪声、无答案拒答、信息整合及反事实测试结构；未复制其新闻正文、问答或数据。
