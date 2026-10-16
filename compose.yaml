@@ -1,0 +1,103 @@
+name: ${COMPOSE_PROJECT_NAME:-chat-rag}
+
+x-backend-environment: &backend-environment
+  DATABASE_URL: mysql+asyncmy://${MYSQL_USER:-chat_rag}:${MYSQL_PASSWORD:?请生成本地环境配置}@mysql:3306/${MYSQL_DATABASE:-chat_rag}?charset=utf8mb4
+  QDRANT_URL: http://qdrant:6333
+  QDRANT_API_KEY: ${QDRANT_API_KEY:?请生成本地环境配置}
+  HEALTH_TIMEOUT_SECONDS: ${HEALTH_TIMEOUT_SECONDS:-3}
+
+x-backend-build: &backend-build
+  context: .
+  dockerfile: deploy/backend.Dockerfile
+  target: runtime
+
+services:
+  mysql:
+    image: mysql:8.4.11@sha256:24989179f58856db763f418010c1169fecc944e3ec1ea7e921572d83eb070f70
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-chat_rag}
+      MYSQL_USER: ${MYSQL_USER:-chat_rag}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?请生成本地环境配置}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请生成本地环境配置}
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci"]
+    volumes: ["mysql_data:/var/lib/mysql"]
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql --protocol=TCP -h 127.0.0.1 -u\"$$MYSQL_USER\" -D\"$$MYSQL_DATABASE\" -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 4s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.19.2@sha256:b7b0444c4c351c970b98e90a6f89c2ee4287c65b44e52b4cb503fa5b2aa927ad
+    environment:
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:?请生成本地环境配置}
+      QDRANT__TELEMETRY_DISABLED: "true"
+    volumes: ["qdrant_data:/qdrant/storage"]
+    healthcheck:
+      # 官方镜像无 curl；使用 bash 内置 TCP 和 HTTP 状态行，检查进程 readiness。
+      test: ["CMD", "bash", "-ec", "exec 3<>/dev/tcp/127.0.0.1/6333; printf 'GET /readyz HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3; read -r line <&3; [[ $$line == *' 200 '* ]]"]
+      interval: 5s
+      timeout: 4s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  migrate:
+    # 同一 runtime 构建使用不同标签，避免 Compose 并行导出同名镜像产生竞争。
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-migrate:0.2.0
+    build: *backend-build
+    environment: *backend-environment
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      mysql: { condition: service_healthy }
+    restart: "no"
+
+  api:
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-backend:0.2.0
+    build: *backend-build
+    environment: *backend-environment
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      qdrant: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=12)"]
+      interval: 10s
+      timeout: 13s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  web:
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-web:0.2.0
+    build:
+      context: .
+      dockerfile: deploy/web.Dockerfile
+    ports: ["127.0.0.1:${WEB_PORT:-8080}:80"]
+    depends_on:
+      api: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/web-health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  test:
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-test:0.2.0
+    profiles: ["test"]
+    build:
+      context: .
+      dockerfile: deploy/backend.Dockerfile
+      target: test
+    environment:
+      <<: *backend-environment
+      ALLOW_TEST_DATABASE: "${ALLOW_TEST_DATABASE:-0}"
+    depends_on:
+      mysql: { condition: service_healthy }
+      qdrant: { condition: service_healthy }
+
+volumes:
+  mysql_data:
+  qdrant_data:

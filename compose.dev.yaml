@@ -1,0 +1,6 @@
+# 仅开发时显式叠加；默认部署只开放 Web 的 loopback 端口。
+services:
+  mysql:
+    ports: ["127.0.0.1:${MYSQL_PORT:-3307}:3306"]
+  qdrant:
+    ports: ["127.0.0.1:${QDRANT_PORT:-6333}:6333"]

@@ -1,0 +1,46 @@
+[project]
+name = "chat-rag-backend"
+version = "0.2.0"
+description = "企业知识库 RAG 模块化单体"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi==0.143.1",
+    "pydantic==2.14.1",
+    "pydantic-settings==2.16.0",
+    "sqlalchemy[asyncio]==2.1.4",
+    "alembic==1.20.0",
+    "asyncmy==0.2.16",
+    "uvicorn==0.54.0",
+    "httpx==0.28.1",
+    "cryptography>=46,<50",
+]
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.13.1",
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+    "ruff==0.17.0",
+]
+
+[tool.uv]
+required-version = "==0.12.5"
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "--strict-markers -m 'not integration and not live'"
+asyncio_mode = "auto"
+markers = [
+    "unit: 无外部服务的配置、规则及契约测试",
+    "integration: 真实 MySQL/Qdrant，须显式提供独立测试配置",
+    "live: 真实模型 API，仅显式启用，阶段 2 无此类测试",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]

@@ -1,7 +1,5 @@
 # 环境检查与依赖核对
 
-> 本提交为补录的设计基线，根据最早保存的阶段2设计资料回溯整理，并非阶段1精确原始快照。
-
 检查日期：2026-10-15。此记录是第一阶段的观察，不等于项目已经安装或运行成功。
 
 ## 1. 项目目录
@@ -71,3 +69,28 @@ TypeScript 7 的发布不自动证明 Vue 类型检查工具已经兼容。若�
 4. 必要依赖分阶段增加；每次增加都运行相关安装、导入、测试或构建验证。
 5. 版本矩阵记录“实际安装版本、来源、验证命令与结果”。安装成功不足以证明 MySQL/Qdrant 或 SSE 的行为兼容。
 
+## 6. 阶段 2 实际选择（2026-10-15）
+
+第一阶段各节保留为历史快照，以下及锁文件是本阶段实际实现依据。Docker Desktop 已启动，daemon 28.3.2 可连接；真实服务结果见 [阶段 2 交付记录](stage-2-delivery.md)。未读取用户已有凭据，项目密钥由生成器创建并保存在忽略的本地配置中。
+
+| 组件 | 实际锁定版本 | 核对与验证依据 |
+| --- | --- | --- |
+| Python / uv | 3.12.14 / 0.12.5 | Python 3.12 环境、uv.lock、冻结安装；不改变系统默认版本 |
+| FastAPI / Pydantic / settings | 0.143.1 / 2.14.1 / 2.16.0 | PyPI 元数据；[lifespan](https://fastapi.tiangolo.com/advanced/events/)、[settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)；单元测试 |
+| SQLAlchemy / asyncmy / Alembic | 2.1.4 / 0.2.16 / 1.20.0 | [asyncio](https://docs.sqlalchemy.org/en/21/orm/extensions/asyncio.html)、[asyncmy](https://docs.sqlalchemy.org/en/21/dialects/mysql.html#asyncmy)、[异步迁移](https://alembic.sqlalchemy.org/en/latest/cookbook.html#using-asyncio-with-alembic)；显式 sqlalchemy[asyncio] 安装 greenlet |
+| Uvicorn / HTTPX | 0.54.0 / 0.28.1 | PyPI 稳定版；lifespan、真实 HTTP 健康探测 |
+| cryptography | 49.0.0 | MySQL caching_sha2_password 的非 TLS RSA 认证支持；仅本机容器网络使用，非公网部署方案 |
+| pytest / pytest-asyncio / Ruff | 9.1.1 / 1.4.0 / 0.17.0 | 标记、测试、lint 与格式检查 |
+| httpx2（仅测试） | 2.13.1 | [Starlette TestClient](https://starlette.dev/testclient/) 已推荐 httpx2；避免回退到已弃用的 HTTPX 测试客户端路径，生产 HTTP 探测仍用 HTTPX |
+| Node / npm | 22.22.2 / 10.9.7 | .nvmrc、packageManager、engines 与 engine-strict；显式选择正确 PATH |
+| Vue / Vite / plugin-vue | 3.5.44 / 8.3.4 / 6.0.10 | npm 注册元数据、[Vite](https://vite.dev/guide/)、[Vue 类型检查](https://vuejs.org/guide/typescript/overview.html) |
+| TypeScript / vue-tsc | 6.0.3 / 3.3.13 | TypeScript 7.0.2 实际执行失败：`ERR_PACKAGE_PATH_NOT_EXPORTED: ./lib/tsc`；改用兼容的[稳定 6.0.3](https://github.com/microsoft/TypeScript/releases/tag/v6.0.3) 后 typecheck/build 均通过 |
+| Element Plus | 2.14.7 | [组件引入](https://element-plus.org/en-US/guide/quickstart.html)，只引入使用的组件，发行 CSS |
+| Vitest / Vue Test Utils / jsdom | 5.0.4 / 2.5.1 / 30.1.2 | 503 报告、网络失败、自动刷新/卸载行为共 3 项测试通过 |
+| MySQL / Qdrant / Nginx | 8.4.11 / 1.19.2 / 1.30.6-alpine | Docker 官方仓库精确标签和 digest，见 compose.yaml 与 deploy；不使用 latest |
+
+首次 shell 工具快照显示 Node 22.22.2，但在项目下 `process.execPath` 实际命中过 `/usr/local/bin/node` 22.19.0。安装 jsdom 曾出现 engine warning；后续显式使用 nvm 的 22.22.2，并以 npm ci/typecheck/test/build 重新验证。不将最初 warning 的安装结果当作最终兼容结论。
+
+本机 cryptography 49.0.0 从源码构建成功；容器使用锁文件解析对应 Linux wheel。镜像拉取首次遇到 Docker Hub OAuth 网络超时，重试拉取精确镜像后继续；此网络问题不改变依赖或镜像基线。
+
+阶段 2 未引入 LangChain、Embedding、模型供应商、Qdrant Python SDK 或 Worker。Qdrant 健康使用带 API key 的 `/collections`，容器 healthcheck 使用 `/readyz`；前者同时验证鉴权。[Qdrant 监控](https://qdrant.tech/documentation/operations/monitoring/)与[容器构建文件](https://github.com/qdrant/qdrant/blob/v1.19.2/Dockerfile)已核对。Compose 使用[健康/迁移依赖顺序](https://docs.docker.com/compose/how-tos/startup-order/)，Python 镜像按[uv 官方流程](https://docs.astral.sh/uv/guides/integration/docker/)冻结安装。

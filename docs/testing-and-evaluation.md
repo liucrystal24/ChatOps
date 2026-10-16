@@ -1,8 +1,6 @@
 # 测试与 RAG Evaluation 设计
 
-> 本提交为补录的设计基线，根据最早保存的阶段2设计资料回溯整理，并非阶段1精确原始快照。
-
-本文件定义后续分阶段测试与评测策略；当前未执行业务测试。
+第 1–7 节为分阶段测试与评测策略；阶段 2 的已实现测试见第 8 节。当前无 RAG 质量评测结果。
 
 ## 1. 验证层次
 
@@ -100,3 +98,10 @@ Dense、Hybrid、Hybrid + Rerank 使用同一语料、权限与题集；控制�
 
 LLM-as-judge 可在后续作为辅助，记录 judge 模型、评分提示和与人工标注的一致性；不能把 judge 分数当作绝对事实，也不能仅因引入 Rerank 就宣称检索效果提高。
 
+## 8. 阶段 2 已实现的测试边界
+
+- `backend/tests/unit`：16 项配置、脱敏、request_id、统一错误、健康状态、OpenAPI 与 Qdrant 故障注入测试。替身只出现在测试代码。
+- `backend/tests/integration`：真实 MySQL 基线迁移/回退/重复 upgrade、utf8mb4/UTC、真实 Qdrant 鉴权及专用 collection 写读删除。必须有 `ALLOW_TEST_DATABASE=1` 且 database 以 `_test` 结尾；不接受 SQLite。测试前只允许无业务表的阶段 2 测试库。
+- `frontend/tests`：3 项 503/非法报告、网络故障、自动刷新和卸载清理行为测试；另执行 vue-tsc 与 production build。
+- `scripts/verify_stage2.py`：独立 Compose 项目验收，分别停止依赖验证 ready=503/live=200，再恢复；强制重建数据容器并读回专用记录验证命名卷；比对 OpenAPI，扫描本次配置的密钥是否进入日志或静态资源。
+- 默认 pytest 只运行 unit，显式排除 integration/live；集成结果和真实命令详见 [阶段 2 交付记录](stage-2-delivery.md)。当前没有模型测试、业务并发锁测试或 RAG 质量成绩，后续随各阶段补充。
