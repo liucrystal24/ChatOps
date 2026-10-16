@@ -59,7 +59,13 @@ def test_request_ids_http_errors_and_openapi():
     UUID(response.headers["x-request-id"])
     assert response.json()["error"]["code"] == "METHOD_NOT_ALLOWED"
     spec = client.get("/openapi.json").json()
-    assert set(spec["paths"]) == {"/health/live", "/health/ready"}
+    assert {
+        "/health/live",
+        "/health/ready",
+        "/api/v1/auth/login",
+        "/api/v1/knowledge-bases",
+    } <= set(spec["paths"])
+    assert not any("documents" in path or "conversations" in path for path in spec["paths"])
     assert "503" in spec["paths"]["/health/ready"]["get"]["responses"]
 
 

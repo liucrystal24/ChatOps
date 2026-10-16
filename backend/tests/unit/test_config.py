@@ -12,6 +12,8 @@ def config(**overrides):
             "database_url": f"mysql+asyncmy://app:{SECRET}@localhost/test?charset=utf8mb4",
             "qdrant_url": "http://localhost:6333",
             "qdrant_api_key": "k" * 32,
+            "auth_secret": "a" * 64,
+            "auth_token_ttl_seconds": 1800,
             **overrides,
         }
     )
@@ -34,6 +36,8 @@ def test_valid_config_and_secrets_hidden():
         {"qdrant_url": "http://localhost:6333/?api-key=private"},
         {"qdrant_api_key": "short"},
         {"health_timeout_seconds": 0},
+        {"auth_secret": "short"},
+        {"auth_token_ttl_seconds": 86400},
     ],
 )
 def test_invalid_config_is_rejected(overrides):

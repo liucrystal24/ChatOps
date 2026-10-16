@@ -1,11 +1,11 @@
-# 接口契约 v0.2
+# 接口契约 v0.3
 
-阶段 2 实现范围仅为两个健康接口，其余接口仍是后续阶段设计契约。各阶段通过 Pydantic 和 FastAPI OpenAPI 落实，只声明当阶段已实现的路由；SSE 事件另按本文件验证。报文示例用于说明结构，不是实际运行数据。
+阶段 3 实现健康、身份、知识库及成员接口；文档、检索、问答和 SSE 仍为后续设计契约。各阶段通过 Pydantic 和 FastAPI OpenAPI 落实，只声明当阶段已实现的路由；SSE 事件另按本文件验证。报文示例用于说明结构，不是实际运行数据。
 
 ## 1. 通用约定
 
 - 业务前缀 `/api/v1`；JSON 字段 snake_case，UUID 字符串，UTC ISO 8601 时间。
-- Bearer JWT：`Authorization: Bearer <token>`。除登录和健康接口外均鉴权。
+- Bearer JWT：`Authorization: Bearer <token>`。除登录和健康外，所有业务接口均鉴权；标准 FastAPI OpenAPI/Swagger/ReDoc 元数据路由公开，只包含接口定义，不返回业务记录或配置凭据。
 - `X-Request-ID` 可选，服务端校验格式或重新生成，并在响应头及错误体回传；它用于追踪，不是业务幂等键。
 - JSON 请求禁止未知字段；筛选字段采用白名单，禁止接收任意 Qdrant filter、collection 名、模型密钥或 user_id。
 - 列表使用 `limit`（默认 20，上限 100）和不透明 cursor，稳定按时间与 ID 排序。返回 `{items, next_cursor}`。
@@ -65,6 +65,17 @@ MySQL 执行真实查询；Qdrant 请求带 API key 的 `/collections`，同时�
 name 为 1–120 字符，description 最多 2,000 字符。KnowledgeBase 包含 `id, name, description, my_role, embedding_profile_id, created_at, updated_at`，不返回供应商密钥或内部 collection 配置。
 
 profile 由服务端配置并在首次真实 Embedding 接入时验证；第二阶段不为此调用模型。若建库已在阶段 3 提供，可暂为未绑定 profile，阶段 4 首次索引前完成绑定；未绑定时不能假造有效向量。
+
+### 阶段 3 实现细化（2026-10-15）
+
+- 用户名 NFKC + casefold 后只允许 1–64 位 `[a-z0-9_.-]` 且首位字母或数字；CLI 创建密码 12–256 字符，不裁剪密码。管理 CLI 由可信本机操作者运行，支持创建、列表、停用和启用；HTTP 不提供用户目录或公开注册。成员通过管理员提供的用户 UUID 添加。
+- JWT 固定 HS256、有效期默认 1800 秒，校验 issuer/audience/exp/iat/nbf/sub/jti；只承载身份。`AUTH_SECRET` 必填，至少 32 字符；每次请求复核用户，写事务在取得授权锁后再次检查当前有效状态和成员关系。停用用户访问返回 401 `USER_DISABLED`，错误登录统一 401 `AUTH_INVALID`。
+- 基本登录限流为单 API 进程内的 60 秒滑动窗口：每用户名 10 次、每直接连接来源 100 次；成功和失败均计数，429 `LOGIN_RATE_LIMITED` 带 Retry-After。忽略客户端转发头，反向代理的来源配额共享；重启会重置，当前仅支持一个 Uvicorn 进程，不宣称分布式限流。
+- PATCH 禁止空对象和 null 字段；name 去首尾空白后 1–120 字符，description 允许空字符串。未知字段及非法 role 一律 422。Member 返回 `user_id, username, role, is_active, created_at, updated_at`。
+- 列表 limit 默认 20、范围 1–100；cursor 是带 HMAC 的不透明位置，绑定当前用户、列表种类和知识库，按 created_at/id 倒序，非法或跨范围 cursor 返回 422 `INVALID_CURSOR`。不在 cursor 中包含凭据。
+- 移除/降级/停用会导致任一未删除知识库失去最后有效 owner 时，整个事务回滚并返回 409 `LAST_OWNER_REQUIRED`。实例管理员没有隐含知识库读权限。成员列表/操作只允许 owner；无成员关系或父库已删除统一 404。
+- 删除知识库为逻辑删除，保留成员记录但所有入口校验父库。阶段 3 没有文档/任务表，因此库均为空；阶段 4 接入上传前必须将未删除文档与活动任务检查加入同一个锁定事务。
+- 所有业务响应 `Cache-Control: no-store`。前端 token 仅存内存，刷新或退出后清除；401 清除会话并取消旧请求，避免旧账号响应写入新账号页面。
 
 ## 4. 文档与任务（阶段 4）
 

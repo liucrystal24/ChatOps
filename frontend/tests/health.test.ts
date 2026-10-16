@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, afterEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import App from '../src/App.vue'
+import App from '../src/HealthStatus.vue'
 import { fetchHealth } from '../src/api/health'
 
 const report = {

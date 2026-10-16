@@ -94,3 +94,15 @@ TypeScript 7 的发布不自动证明 Vue 类型检查工具已经兼容。若�
 本机 cryptography 49.0.0 从源码构建成功；容器使用锁文件解析对应 Linux wheel。镜像拉取首次遇到 Docker Hub OAuth 网络超时，重试拉取精确镜像后继续；此网络问题不改变依赖或镜像基线。
 
 阶段 2 未引入 LangChain、Embedding、模型供应商、Qdrant Python SDK 或 Worker。Qdrant 健康使用带 API key 的 `/collections`，容器 healthcheck 使用 `/readyz`；前者同时验证鉴权。[Qdrant 监控](https://qdrant.tech/documentation/operations/monitoring/)与[容器构建文件](https://github.com/qdrant/qdrant/blob/v1.19.2/Dockerfile)已核对。Compose 使用[健康/迁移依赖顺序](https://docs.docker.com/compose/how-tos/startup-order/)，Python 镜像按[uv 官方流程](https://docs.astral.sh/uv/guides/integration/docker/)冻结安装。
+
+## 7. 阶段 3 核对（2026-10-15）
+
+新增并锁定 PyJWT 2.15.1、argon2-cffi 25.1.0（含绑定包，精确传递依赖见 uv.lock），其余生产依赖保持阶段 2 已验证组合。没有新增服务或前端框架。
+
+- 已核对 [FastAPI JWT/密码教程](https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/)、[PyJWT claims 验证](https://pyjwt.readthedocs.io/en/stable/usage.html)、[Argon2 PasswordHasher](https://argon2-cffi.readthedocs.io/en/stable/howto.html)；选择固定 HS256，校验 issuer/audience 与必要时间/身份 claims，Argon2id 使用该锁定库默认参数，哈希/验证在线程中执行且并发上限 4。
+- 已核对 [SQLAlchemy 2.1 事务](https://docs.sqlalchemy.org/en/21/orm/session_transaction.html)。业务使用 READ COMMITTED 和 MySQL 单行 FOR UPDATE 授权变更锁；真实并发测试验证阻塞、有效 owner 计数及锁后重新鉴权。
+- MySQL CHECK 错误通过 asyncmy 返回 OperationalError、errno 3819；测试断言真实 errno，不假设一定包装为 IntegrityError。外键、CHECK、迁移均在真实 MySQL 8.4 验证。
+- 新增 AUTH_SECRET（至少 32 字符）与 AUTH_TOKEN_TTL_SECONDS（默认 1800，300–7200）。`init_env.py --upgrade` 只追加缺失配置，保留旧值和数据密码。密钥不进入前端，JWT 不放角色和正文。
+- 阶段 3 测试项目为 chat-rag-stage3-test，数据库 chat_rag_stage3_test，Web 18081；测试运行日志和临时浏览器凭据被 Git/Docker 忽略，不作为默认账号或服务回退。
+
+实际检查结果与未验证边界见 [stage-3-delivery.md](stage-3-delivery.md)。

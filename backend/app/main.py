@@ -2,14 +2,22 @@ from contextlib import asynccontextmanager
 
 import httpx
 from fastapi import FastAPI
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.api.health import router
+from app.api.identity import router as identity_router
+from app.api.knowledge_bases import router as knowledge_base_router
 from app.core.config import Settings, load_settings
-from app.core.errors import install_error_handlers
+from app.core.errors import ErrorResponse, install_error_handlers
 from app.core.logging import RequestContextMiddleware, configure_logging
+from app.core.pagination import Cursors
+from app.core.security import LoginLimiter, Security
 from app.infrastructure.database import create_engine, expected_heads
 from app.infrastructure.health import DependencyProbes
+from app.infrastructure.repositories import Database
 from app.modules.health.service import HealthService
+from app.modules.identity.service import IdentityService
+from app.modules.knowledge_bases.service import KnowledgeBaseService
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -18,6 +26,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         config = settings if settings is not None else load_settings()
         configure_logging()
         engine = create_engine(config)
+        database = Database(async_sessionmaker(engine, expire_on_commit=False))
+        security = Security(config)
+        app.state.identity_service = IdentityService(database, security, LoginLimiter())
+        app.state.knowledge_base_service = KnowledgeBaseService(
+            database, Cursors(config.auth_secret.get_secret_value())
+        )
         try:
             async with httpx.AsyncClient(
                 base_url=str(config.qdrant_url),
@@ -34,9 +48,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 yield
         finally:
             await engine.dispose()
+            security.close()
 
-    app = FastAPI(title="Chat RAG API", version="0.2.0", lifespan=lifespan)
+    app = FastAPI(title="Chat RAG API", version="0.3.0", lifespan=lifespan)
     install_error_handlers(app)
     app.add_middleware(RequestContextMiddleware)
     app.include_router(router)
+    errors = {
+        status: {"model": ErrorResponse} for status in (401, 403, 404, 409, 422, 429, 500, 503)
+    }
+    app.include_router(identity_router, responses=errors)
+    app.include_router(knowledge_base_router, responses=errors)
     return app

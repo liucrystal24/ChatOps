@@ -44,7 +44,28 @@ def test_mysql_migrations_readiness_and_idempotency(settings):
             await engine.dispose()
 
     existing = asyncio.run(tables())
-    assert set(existing) <= {"alembic_version"}, "阶段 2 测试库不能含业务表或其他数据"
+    expected = {
+        "alembic_version",
+        "authorization_guard",
+        "users",
+        "knowledge_bases",
+        "knowledge_base_members",
+    }
+    assert set(existing) <= expected, "迁移回退只允许已知结构的专用空测试库"
+
+    async def assert_empty():
+        engine = create_engine(settings)
+        try:
+            async with engine.connect() as connection:
+                for table in ("users", "knowledge_bases", "knowledge_base_members"):
+                    if table in existing:
+                        assert (
+                            await connection.scalar(text(f"SELECT COUNT(*) FROM {table}")) == 0
+                        ), "测试库含记录，拒绝回退迁移"
+        finally:
+            await engine.dispose()
+
+    asyncio.run(assert_empty())
     migrate("downgrade", "base")
     try:
         with TestClient(create_app(settings)) as client:
@@ -53,7 +74,7 @@ def test_mysql_migrations_readiness_and_idempotency(settings):
             assert before.json()["checks"]["migrations"]["status"] == "pending"
             migrate("upgrade", "head")
             migrate("upgrade", "head")
-            assert asyncio.run(tables()) == ["alembic_version"]
+            assert set(asyncio.run(tables())) == expected
             report = client.get("/health/ready")
             assert report.status_code == 200
             assert all(check["status"] == "ok" for check in report.json()["checks"].values())

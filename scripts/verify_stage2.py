@@ -11,35 +11,41 @@ from pathlib import Path
 from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[1]
-ENV_FILE = ROOT / ".env.stage2-test"
 ARTIFACTS = ROOT / "artifacts"
 
 
-def main() -> None:
-    if not ENV_FILE.exists():
+def main(stage=2) -> None:
+    env_file = ROOT / f".env.stage{stage}-test"
+    project = f"chat-rag-stage{stage}-test"
+    if not env_file.exists():
         subprocess.run(
             [
                 sys.executable,
                 str(ROOT / "scripts/init_env.py"),
                 "--test",
+                "--stage",
+                str(stage),
                 "--output",
-                str(ENV_FILE),
+                str(env_file),
             ],
             check=True,
         )
     values = dict(
         line.split("=", 1)
-        for line in ENV_FILE.read_text().splitlines()
+        for line in env_file.read_text().splitlines()
         if line and not line.startswith("#")
     )
-    if values.get("COMPOSE_PROJECT_NAME") != "chat-rag-stage2-test" or not values.get(
+    if values.get("COMPOSE_PROJECT_NAME") != project or not values.get(
         "MYSQL_DATABASE", ""
     ).endswith("_test"):
-        raise SystemExit("只接受专用 chat-rag-stage2-test 项目及 _test 数据库")
-    secrets = [values[key] for key in ("MYSQL_PASSWORD", "MYSQL_ROOT_PASSWORD", "QDRANT_API_KEY")]
-    compose = ["docker", "compose", "--env-file", str(ENV_FILE), "-p", "chat-rag-stage2-test"]
+        raise SystemExit("只接受对应阶段的专用测试项目及 _test 数据库")
+    secrets = [
+        values[key]
+        for key in ("MYSQL_PASSWORD", "MYSQL_ROOT_PASSWORD", "QDRANT_API_KEY", "AUTH_SECRET")
+    ]
+    compose = ["docker", "compose", "--env-file", str(env_file), "-p", project]
     ARTIFACTS.mkdir(exist_ok=True)
-    log_path = ARTIFACTS / "stage2-verification.log"
+    log_path = ARTIFACTS / f"stage{stage}-verification.log"
     log_path.write_text("")
 
     def run(args, *, input=None, timeout=600):
@@ -130,6 +136,10 @@ def main() -> None:
         )
     )
     assert actual_spec == json.loads((ROOT / "docs/openapi.json").read_text())
+    if stage == 3:
+        from stage3_network import verify
+
+        verify(run, base, secrets)
 
     token = uuid4().hex
     collection = f"test_stage2_persistence_{token}"
@@ -217,7 +227,7 @@ asyncio.run(main())
         assert status == 200 and not any(secret.encode() in asset for secret in secrets)
     states = run(["ps", "--all", "--format", "{{.Service}} {{.State}} {{.Health}}"])
     print(states.strip(), flush=True)
-    print(f"阶段 2 服务验收全部通过；原始命令结果已脱敏保存到 {log_path}", flush=True)
+    print(f"阶段 {stage} 服务验收全部通过；原始命令结果已脱敏保存到 {log_path}", flush=True)
 
 
 if __name__ == "__main__":

@@ -5,6 +5,8 @@ x-backend-environment: &backend-environment
   QDRANT_URL: http://qdrant:6333
   QDRANT_API_KEY: ${QDRANT_API_KEY:?请生成本地环境配置}
   HEALTH_TIMEOUT_SECONDS: ${HEALTH_TIMEOUT_SECONDS:-3}
+  AUTH_SECRET: ${AUTH_SECRET:?请使用 init_env.py --upgrade 补齐认证配置}
+  AUTH_TOKEN_TTL_SECONDS: ${AUTH_TOKEN_TTL_SECONDS:-1800}
 
 x-backend-build: &backend-build
   context: .
@@ -46,7 +48,7 @@ services:
 
   migrate:
     # 同一 runtime 构建使用不同标签，避免 Compose 并行导出同名镜像产生竞争。
-    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-migrate:0.2.0
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-migrate:0.3.0
     build: *backend-build
     environment: *backend-environment
     command: ["alembic", "upgrade", "head"]
@@ -55,7 +57,7 @@ services:
     restart: "no"
 
   api:
-    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-backend:0.2.0
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-backend:0.3.0
     build: *backend-build
     environment: *backend-environment
     depends_on:
@@ -70,7 +72,7 @@ services:
     restart: unless-stopped
 
   web:
-    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-web:0.2.0
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-web:0.3.0
     build:
       context: .
       dockerfile: deploy/web.Dockerfile
@@ -85,7 +87,7 @@ services:
     restart: unless-stopped
 
   test:
-    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-test:0.2.0
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-test:0.3.0
     profiles: ["test"]
     build:
       context: .

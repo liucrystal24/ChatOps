@@ -27,6 +27,7 @@ def create_engine(settings: Settings) -> AsyncEngine:
         max_overflow=5,
         pool_timeout=settings.health_timeout_seconds,
         hide_parameters=True,
+        isolation_level="READ COMMITTED",
         connect_args={
             "connect_timeout": settings.connect_timeout,
             "init_command": "SET time_zone = '+00:00'",

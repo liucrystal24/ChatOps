@@ -1,12 +1,13 @@
 import asyncio
 
 from alembic import context
-from sqlalchemy import MetaData, pool
+from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.core.config import load_settings
+from app.infrastructure.models import Base
 
-target_metadata = MetaData()
+target_metadata = Base.metadata
 
 
 def run_migrations(connection):

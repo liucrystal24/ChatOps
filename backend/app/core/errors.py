@@ -4,7 +4,17 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException
+
+
+class AppError(Exception):
+    def __init__(self, status: int, code: str, message: str, headers: dict | None = None):
+        self.status = status
+        self.code = code
+        self.message = message
+        self.headers = headers or {}
+        super().__init__(code)
 
 
 class ErrorInfo(BaseModel):
@@ -34,6 +44,16 @@ def error_response(request: Request, status: int, code: str, message: str, detai
 
 
 def install_error_handlers(app: FastAPI) -> None:
+    @app.exception_handler(AppError)
+    async def application_error(request: Request, exc: AppError):
+        response = error_response(request, exc.status, exc.code, exc.message)
+        response.headers.update(exc.headers)
+        return response
+
+    @app.exception_handler(SQLAlchemyError)
+    async def storage_error(request: Request, exc: SQLAlchemyError):
+        return error_response(request, 503, "STORAGE_UNAVAILABLE", "数据服务暂不可用")
+
     @app.exception_handler(HTTPException)
     async def http_error(request: Request, exc: HTTPException):
         codes = {

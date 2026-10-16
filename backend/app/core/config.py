@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     database_url: SecretStr
     qdrant_url: HttpUrl
     qdrant_api_key: SecretStr = Field(min_length=32)
+    auth_secret: SecretStr = Field(min_length=32)
+    auth_token_ttl_seconds: int = Field(default=1800, ge=300, le=7200)
     health_timeout_seconds: float = Field(default=3, ge=0.1, le=10)
 
     @field_validator("database_url")

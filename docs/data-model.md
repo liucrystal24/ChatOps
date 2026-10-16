@@ -1,6 +1,6 @@
 # 核心数据模型
 
-本文件为逻辑/物理设计基线，不是已执行的 SQL。表随阶段通过 Alembic 增量创建；不在第一轮迁移一次建齐全部表。
+阶段 3 已通过 Alembic 实现 users、knowledge_bases、knowledge_base_members 与 authorization_guard；后续表仍为逻辑/物理设计基线。表随阶段增量创建，不一次建齐全部业务表。
 
 阶段 2 的 `0001_baseline` 是空业务迁移，仅由 Alembic 建立 `alembic_version` 并记录基线，不创建用户等业务表。就绪检查比较数据库 revision 集合与本地迁移 head 集合，避免数据库落后或超前时误报就绪。
 
@@ -60,6 +60,10 @@ erDiagram
 字段：`kb_id` FK、`user_id` FK、`role VARCHAR(16)`（owner/editor/viewer）、创建/更新时间。复合主键 `(kb_id, user_id)`；反向索引 `(user_id, kb_id)`。
 
 建库与创建 owner 成员同一事务。增删/降级 owner 时锁定知识库行，并验证剩余有效 owner；用户停用也检查其拥有知识库的有效 owner 数，防止并发操作留下无人管理的库。
+
+### authorization_guard（阶段 3 技术约束表）
+
+仅一列 `id TINYINT UNSIGNED PRIMARY KEY CHECK(id=1)`，迁移插入唯一行 1。知识库创建/修改/删除、成员变更和用户生命周期变更，在短事务内先 `SELECT ... FOR UPDATE` 锁此行，再读取用户有效状态、锁知识库行并检查 owner。原因：停用一个用户可能同时影响多个知识库，单独锁库不能覆盖它与成员角色修改的所有竞争窗口。当前数十名用户的规模接受授权写操作串行化；普通读取和密码哈希不持有该锁。阶段 3 使用 READ COMMITTED，锁后读取最新已提交状态，避免提前建立的快照保留旧成员/用户状态。未来优化锁粒度必须保留同等并发测试。
 
 ### documents（阶段 4）
 
