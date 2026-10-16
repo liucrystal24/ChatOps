@@ -2,7 +2,7 @@
 
 面向本地部署和技术展示的模块化单体，按阶段实现权限隔离、文档索引、可追溯问答与可复现评测。
 
-**阶段 4：文档索引与真实 Dense 检索（验收进行中）。** 已接入上传、后台 Worker、TXT/Markdown/文字 PDF、真实硅基流动 `BAAI/bge-m3`、来源读取与权限内检索服务。聊天、LLM 和 SSE 在阶段 5 实现；目前仍不能称为完整 RAG 问答助手。检查与限制见[阶段 4 交付记录](docs/stage-4-delivery.md)。
+**阶段 4：文档索引与真实 Dense 检索（已完成并验收）。** 已接入上传、后台 Worker、TXT/Markdown/文字 PDF、真实硅基流动 `BAAI/bge-m3`、来源读取与权限内检索服务。聊天、LLM 和 SSE 在阶段 5 实现；目前仍不能称为完整 RAG 问答助手。检查与限制见[阶段 4 交付记录](docs/stage-4-delivery.md)。
 
 ## 启动与升级
 
@@ -115,6 +115,8 @@ uv run --frozen --env-file ../.env uvicorn app.main:create_app --factory --host 
 ```bash
 python3 scripts/verify_stage4.py
 ```
+
+仅复查已构建服务的网络、故障恢复与持久化，可执行 `python3 scripts/verify_stage4.py --services-only`；该模式不构建或运行 pytest。本轮测试与服务检查分别完成，精确执行记录见交付文档。
 
 使用专用 `chat-rag-stage4-test` 项目、`*_test` 数据库、18082 Web 端口和独立数据卷，构建运行/测试镜像并执行 unit、真实 MySQL/Qdrant integration 及真实 Embedding live。Key 从进程环境或本地 `.env` 读取，不复制到测试配置文件、不打印；其他测试账号/JWT/密码仅用于本次测试，日志脱敏。
 

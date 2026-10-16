@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ARTIFACTS = ROOT / "artifacts"
 
 
-def main(stage=2) -> None:
+def main(stage=2, services_only=False) -> None:
     env_file = ROOT / f".env.stage{stage}-test"
     project = f"chat-rag-stage{stage}-test"
     if not env_file.exists():
@@ -114,31 +114,19 @@ def main(stage=2) -> None:
             time.sleep(1)
         raise AssertionError("健康状态未在 90 秒内达到预期")
 
-    step("1/7 检查 Compose、构建运行镜像与测试镜像")
-    run(["config", "--quiet"])
-    run(["stop", "worker"]) if stage == 4 else None
-    run(
-        ["build", "api", "migrate", "web", "test", *(["worker"] if stage == 4 else [])],
-        timeout=1200,
-    )
-    step("2/7 启动真实 MySQL/Qdrant，执行单元及服务集成测试")
-    run(["up", "-d", "--wait", "--wait-timeout", "180", "mysql", "qdrant"])
-    output = run(
-        [
-            "run",
-            "--rm",
-            "-e",
-            "ALLOW_TEST_DATABASE=1",
-            "test",
-            "pytest",
-            "-m",
-            "unit or integration",
-            "-q",
-        ]
-    )
-    print(output.strip(), flush=True)
-    if stage == 4:
-        live = run(
+    if services_only:
+        step("本次只执行服务验收（步骤 3–7）；不构建、不运行 pytest，测试结果需另行记录")
+    else:
+        step("1/7 检查 Compose、构建运行镜像与测试镜像")
+        run(["config", "--quiet"])
+        run(["stop", "worker"]) if stage == 4 else None
+        run(
+            ["build", "api", "migrate", "web", "test", *(["worker"] if stage == 4 else [])],
+            timeout=1200,
+        )
+        step("2/7 启动真实 MySQL/Qdrant，执行单元及服务集成测试")
+        run(["up", "-d", "--wait", "--wait-timeout", "180", "mysql", "qdrant"])
+        output = run(
             [
                 "run",
                 "--rm",
@@ -147,12 +135,27 @@ def main(stage=2) -> None:
                 "test",
                 "pytest",
                 "-m",
-                "live",
+                "unit or integration",
                 "-q",
-                "-s",
             ]
         )
-        print(live.strip(), flush=True)
+        print(output.strip(), flush=True)
+        if stage == 4:
+            live = run(
+                [
+                    "run",
+                    "--rm",
+                    "-e",
+                    "ALLOW_TEST_DATABASE=1",
+                    "test",
+                    "pytest",
+                    "-m",
+                    "live",
+                    "-q",
+                    "-s",
+                ]
+            )
+            print(live.strip(), flush=True)
     step("3/7 启动完整骨架，验证迁移任务、页面、代理及 OpenAPI")
     run(["up", "-d", "--wait", "--wait-timeout", "180"])
     wait_ready()

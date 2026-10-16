@@ -75,11 +75,11 @@ asyncio.run(main())
         )
 
     try:
-        import http.client
+        from http.client import HTTPConnection
         from urllib.parse import urlsplit
 
         address = urlsplit(base)
-        connection = http.client.HTTPConnection(address.hostname, address.port, timeout=10)
+        connection = HTTPConnection(address.hostname, address.port, timeout=10)
         connection.request(
             "POST",
             "/api/v1/knowledge-bases/oversized/documents",
