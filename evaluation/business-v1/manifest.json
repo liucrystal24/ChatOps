@@ -1,0 +1,44 @@
+{
+  "version": "synthetic-business-v1",
+  "created_at": "2026-10-16",
+  "frozen_before_first_model_run": true,
+  "synthetic": true,
+  "human_reviewed": false,
+  "case_count": 36,
+  "cases_sha256": "17de7da64641bde861296e805fcc9407eb97f64f103ebf0f9744d912525a0272",
+  "sources": [
+    {
+      "file": "operations-2026.md",
+      "sha256": "a0bcbffa09e014ceec85f302824e5c8567efe8e0e41cb08147595721bdce4fef",
+      "characters": 867
+    },
+    {
+      "file": "permissions-2026.md",
+      "sha256": "72eebb330e5887a05a5fe64d8497ca37bcc46cf44af4acdd00dea8b3697b5a54",
+      "characters": 854
+    },
+    {
+      "file": "professional-2026.md",
+      "sha256": "c315a0db99c93df341b5a34cf8c30e42e4466284e43ee323a7f0a5a4933171ba",
+      "characters": 783
+    },
+    {
+      "file": "standard-2025-archive.md",
+      "sha256": "bdd66aacd21c9f009538d36fbafe6cd5ba7805332034e8946e8a482d5ac8efc8",
+      "characters": 812
+    },
+    {
+      "file": "standard-2026.md",
+      "sha256": "ee31dab4931dd2f405b70ae11f0f5f2db49801acd9559352bd7a5e0c6ba9689a",
+      "characters": 922
+    }
+  ],
+  "split": "new-domain-first-run; becomes regression after inspection",
+  "thresholds": {
+    "evidence_recall_at_5": 0.8,
+    "answer_correctness": 0.8,
+    "fact_support": 0.8,
+    "citation_validity": 1.0
+  },
+  "scope": "All five documents in the same authorized KB; no per-case metadata filter"
+}

@@ -4,6 +4,8 @@
 
 **阶段 5：真实多轮问答及补充质量修复已实现，人工质量验收待完成。** 已接入文档索引、云端 `BAAI/bge-m3` + `Qwen/Qwen3-8B`、会话历史、SSE、权限复核和来源引用。已知日期/权限/容量误答改为证据选择与原文摘录校验；最终40题中，原22题指定证据召回22/22，12道无答案题全部拒答。实际检查与边界见[质量修复交付](docs/stage-5-quality-fix-delivery.md)，逐题回答和原文见[测试用例对照表](docs/stage-5-test-cases.md)；人工正确率/事实支持率尚未审核，暂不标记MVP全部验收通过。
 
+2026-10-16新增5篇原创虚构业务文章与36题压力测试：Agent逐题判断32题正确、4题错误，暴露普通表格、套餐/角色/属性错配等阶段5待办；原文一致与引用可访问仍不能保证答对。见[业务集审核与解决方案](docs/business-v1-quality-review.md)、[36题实际回答表](docs/business-v1-test-cases.md)。该合成测试不是独立真人或真实客户资料验收。
+
 ## 启动与升级
 
 需要 Docker Desktop/Compose 和生成配置用的 Python。首次构建访问 Docker Hub、GHCR、PyPI、npm 和 Hugging Face；只下载合计约 28 MB 的两个固定分词器，不下载模型权重、无需显卡。
