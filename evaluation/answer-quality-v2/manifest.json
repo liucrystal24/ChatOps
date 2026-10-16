@@ -1,0 +1,7 @@
+{
+  "cases_sha256": "770d68acfba81bf124201e9c3ae6e2512afdce88d368ce9d6d6e6ac8618f0c44",
+  "case_count": 20,
+  "created_at": "2026-10-16",
+  "purpose": "固定候选、初次模型调用前冻结的生成验收；非独立第三方盲测；不得据此声称真实检索达标",
+  "human_reviewed": false
+}

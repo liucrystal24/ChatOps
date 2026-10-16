@@ -138,7 +138,7 @@ erDiagram
 
 日志不保存全文，但业务会话需要持久化正文；其读取严格受会话归属及当前知识库权限控制。usage 仅记录供应商实际返回的数据，未返回时为 NULL，不能估造计费 token 数。
 
-阶段5质量修复：无新增表/迁移。model_config 保存 `answer_mode=extractive-v1`、`selection_max_tokens=256`；timings 同样记录 answer_mode。content 仅保存校验后的证据摘录或固定拒答，模型中间 JSON 不进入 content。候选全部被过滤时不调用生成模型，usage 可为 NULL。
+阶段5质量修复：无新增表/迁移。model_config 保存 `answer_mode=extractive-v2`、`selection_max_tokens=256`；timings 同样记录 answer_mode。content 仅保存校验后的证据摘录或固定拒答，模型中间 JSON 不进入 content。候选全部被过滤时不调用生成模型，usage 可为 NULL。
 
 ### message_citations（阶段 5）
 
@@ -181,3 +181,6 @@ MVP 使用版本化 JSONL 题集和单次运行的 JSON/Markdown 报告，不新
 ## 阶段 5 召回修正的配置记录
 
 无新增表或迁移。document_index_versions.config_snapshot 的 splitter 记录 recursive-v1 / paragraph-v2；document_representation 记录 body-v1 / heading-body-v2，现默认 body-v1。chunks.metadata 的 document_representation 与生成该版本时的表示一致，text、text_sha256、token_count 仍针对可定位原文。旧快照缺少这些键时按既有正文表示解释，不重写历史记录。新旧有效文档版本可共用同一模型 profile；不得混入不同模型或维度，重建仍受原子发布和引用保留约束。
+
+
+本节点新增简单普通表格原文行和显式套餐/角色/属性校验，无法支持所问属性时拒答；逐行索引和最终验收记录见后续节点。

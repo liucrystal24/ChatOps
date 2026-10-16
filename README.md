@@ -178,3 +178,6 @@ docker compose --env-file .env.stage5-test -p chat-rag-stage5-test down
 固定公开题集运行方式见 evaluation/README.md；真实报告在忽略提交的 evaluation/outputs。初版标注由 Agent 起草，不能冒充用户人工质量验收。阶段5质量门槛通过前不进入阶段6的 Hybrid/Rerank 实现。
 
 本机已为 Navicat 开放 3307 时，升级也应叠加相同开发配置以保留端口：`docker compose -f compose.yaml -f compose.dev.yaml up --build -d --wait`。本轮更新现有实例采用先运行 migrate，再仅重建 API/Worker/Web，保留原 MySQL/Qdrant 容器及数据卷。
+
+
+本回溯节点先包含普通表格与对象/属性修复；索引排名优化和最终回归在后续提交，不将本节点当作最终交付。

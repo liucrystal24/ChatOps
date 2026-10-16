@@ -40,7 +40,7 @@ def test_business_suite_rejects_changed_source_instead_of_rescoring_it(tmp_path)
         load_suite(folder)
 
 
-def test_candidate_recall_and_catalog_loss_are_different_metrics():
+def test_candidate_recall_and_general_table_catalog_keep_original_positions():
     _, cases, corpus = load_suite(SUITE)
     case = next(c for c in cases if c["case_id"] == "a13")
     filename = case["evidence_units"][0]["alternatives"][0]["file"]
@@ -56,7 +56,7 @@ def test_candidate_recall_and_catalog_loss_are_different_metrics():
     )
     mappings = {filename: "test-doc"}
     assert score_case(case, [source], mappings)["complete"]
-    assert not score_case(case, catalog_sources(case["question"], [source]), mappings)["complete"]
+    assert score_case(case, catalog_sources(case["question"], [source]), mappings)["complete"]
     # 没有拿另一版本同名主题/相同数值的位置充作本题正确证据。
     assert not score_case(case, [{**source, "document_id": "other-version"}], mappings)["complete"]
 

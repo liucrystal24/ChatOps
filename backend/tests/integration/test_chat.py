@@ -210,11 +210,11 @@ async def indexed_fixture(bundle):
         yield resource
 
 
-async def indexed_chat(indexing):
+async def indexed_chat(indexing, text="培训在周二十点，地点为三楼会议室。", filename="资料.txt"):
     from app.modules.retrieval.service import RetrievalService
 
     b, documents, worker, embedding, vectors, actor, kb_id = indexing
-    uploaded = await upload(indexing, "培训在周二十点，地点为三楼会议室。")
+    uploaded = await upload(indexing, text, filename)
     await worker.run_once()
     model = TestModel()
     service = ChatService(
@@ -401,3 +401,28 @@ async def test_explicit_refusal_is_stored_without_draft_facts_or_citations(index
     assert result[-1].event == "done" and result[-1].data["answer_type"] == "abstention"
     stored = await c.service.message(c.actor, run.message_id)
     assert stored.content == ABSTENTION and not stored.citations
+
+
+async def test_signing_location_missing_refuses_before_model_and_persists_no_citation(indexing):
+    c = await indexed_chat(indexing)
+    run = await start(c, data("培训合同在哪里签署？"))
+    result = await events(c.service, run)
+    assert result[-1].event == "done" and result[-1].data["answer_type"] == "abstention"
+    assert c.model.calls == 0
+    stored = await c.service.message(c.actor, run.message_id)
+    assert stored.content == ABSTENTION and not stored.citations
+    assert stored.timings["answer_mode"] == "extractive-v2"
+
+
+async def test_general_table_answer_is_original_row_and_source_is_current(indexing):
+    raw = "# 基础版2028导出\n\n| 项目 | 限额 |\n| --- | --- |\n| 资产CSV | 1200行 |"
+    c = await indexed_chat(indexing, raw, "导出.md")
+    run = await start(c, data("基础版2028资产CSV导出限额多少？"))
+    result = await events(c.service, run)
+    assert result[-1].event == "done", result[-1].data
+    stored = await c.service.message(c.actor, run.message_id)
+    assert stored.status == "completed" and "1200行" in stored.content
+    assert "| 项目 | 限额 |" in stored.content and "| --- | --- |" in stored.content
+    assert len(stored.citations) == 1 and stored.citations[0].available
+    chunk = await c.documents.chunk(c.actor, str(stored.citations[0].chunk_id))
+    assert raw[chunk.char_start : chunk.char_end] == chunk.text

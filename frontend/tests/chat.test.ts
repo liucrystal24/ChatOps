@@ -37,6 +37,13 @@ describe('流式问答', () => {
     expect(html).toContain('[S1]')
     expect(html).not.toContain('<script>')
   })
+  it('表格摘录按表头和当前行展示，引用保持可见', () => {
+    const html = renderMarkdown('> | 项目 | 限额 |\n> | --- | --- |\n> | 报表CSV | 1200行 |\n\n[S1]')
+    expect(html).toContain('<table>')
+    expect(html).toContain('<th>限额</th>')
+    expect(html).toContain('<td>1200行</td>')
+    expect(html).toContain('[S1]')
+  })
 
   async function setup(complete = true, earlyError = false, stall = false) {
     const conversation={id:'conv-1',kb_id:'kb-1',title:'培训',active_message_id:null}

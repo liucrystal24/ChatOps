@@ -19,8 +19,8 @@ async def run(args):
     from app.modules.chat.evidence import catalog, render_plan
     from app.modules.chat.prompt import ABSTENTION, messages_for, validate_answer
 
-    cases_path = ROOT / "evaluation/answer-quality-cases-v1.jsonl"
-    manifest = json.loads((ROOT / "evaluation/answer-quality-manifest-v1.json").read_text())
+    cases_path = args.cases
+    manifest = json.loads(args.manifest.read_text())
     assert hashlib.sha256(cases_path.read_bytes()).hexdigest() == manifest["cases_sha256"]
     cases = [json.loads(line) for line in cases_path.read_text().splitlines()]
     baseline = json.loads(args.baseline.read_text())
@@ -29,7 +29,7 @@ async def run(args):
         for c in map(json.loads, (ROOT / "evaluation/cases-v2.jsonl").read_text().splitlines())
     }
     for row in baseline["rows"]:
-        if row["case_id"] in {"u05", "f04", "s15", "s02"}:
+        if not args.skip_historical and row["case_id"] in {"u05", "f04", "s15", "s02"}:
             case = frozen[row["case_id"]]
             cases.append(
                 dict(
@@ -60,6 +60,8 @@ async def run(args):
             str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in [
                 ROOT / "backend/app/modules/chat/evidence.py",
+                ROOT / "backend/app/modules/chat/constraints.py",
+                ROOT / "backend/app/modules/documents/markdown_tables.py",
                 ROOT / "backend/app/modules/chat/prompt.py",
                 ROOT / "scripts/evaluate_answer_quality.py",
             ]
@@ -122,4 +124,11 @@ async def run(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--baseline", type=Path, required=True)
+    parser.add_argument(
+        "--cases", type=Path, default=ROOT / "evaluation/answer-quality-cases-v1.jsonl"
+    )
+    parser.add_argument(
+        "--manifest", type=Path, default=ROOT / "evaluation/answer-quality-manifest-v1.json"
+    )
+    parser.add_argument("--skip-historical", action="store_true")
     asyncio.run(run(parser.parse_args()))

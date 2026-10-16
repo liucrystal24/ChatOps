@@ -4,53 +4,64 @@ import json
 import re
 
 from app.infrastructure.chat_model import ModelFailure
+from app.modules.chat.constraints import attribute_matches, complete_scope, scope_matches
+from app.modules.documents.markdown_tables import cells, tables
+
+ANSWER_MODE = "extractive-v2"
 
 DATE = re.compile(r"(?:19|20)\d{2}(?:[-年]\d{1,2}(?:[-月]\d{1,2}日?)?)")
 BYTES = re.compile(r"\d[\d,.]*\s*(?:[KMGT]i?B|字节)", re.I)
 ROLES = ("owner", "editor", "viewer")
 
 
-def cells(line):
-    # 转义竖线不是列边界；只识别简单 Markdown 表格，复杂表格保守不推断权限。
-    return [part.strip() for part in re.split(r"(?<!\\)\|", line.strip().strip("|"))]
-
-
 def units(sources):
     result = []
     for source in sources:
-        text, header, header_span = source["excerpt"], None, None
-        heading_span, fenced = None, False
+        text = source["excerpt"]
+        row_map, table_lines = {}, set()
+        for table in tables(text):
+            table_lines.update((table.header_span[0], table.separator_span[0]))
+            for row in table.rows:
+                row_map[row.span[0]] = (table, row)
+        heading_span, fenced = None, None
         for line_match in re.finditer(r"[^\n]+", text):
             line = line_match.group()
-            if line.lstrip().startswith(("```", "~~~")):
-                fenced = not fenced
+            if marker := re.match(r"\s*(`{3,}|~{3,})", line):
+                token = marker[1]
+                if fenced is None:
+                    fenced = (token[0], len(token))
+                elif (
+                    token[0] == fenced[0]
+                    and len(token) >= fenced[1]
+                    and not line[marker.end() :].strip()
+                ):
+                    fenced = None
                 continue
             if fenced:
                 continue
-            if line.lstrip().startswith("|"):
-                columns = cells(line)
-                if any(c.strip(" `") in ("权限", "角色") for c in columns):
-                    header, header_span = columns, [line_match.start(), line_match.end()]
-                    continue
-                if all(re.fullmatch(r":?-+:?", c.replace(" ", "")) for c in columns):
-                    continue
-                # 不把没有表头的片段猜成角色/操作关系。
-                if header is None or len(header) != len(columns):
-                    continue
-                spans = [header_span, [line_match.start(), line_match.end()]]
+            if line_match.start() in row_map:
+                table, row = row_map[line_match.start()]
+                spans = [table.header_span, table.separator_span, row.span]
                 role_index = next(
-                    i for i, h in enumerate(header) if h.strip(" `") in ("权限", "角色")
+                    (i for i, h in enumerate(table.headers) if h.strip(" `") in ("权限", "角色")),
+                    None,
                 )
                 result.append(
                     dict(
                         source_label=source["source_label"],
                         spans=spans,
                         text="\n".join(text[a:b] for a, b in spans),
-                        permission=columns[role_index],
+                        permission=row.values[role_index] if role_index is not None else None,
+                        headers=list(table.headers),
                     )
                 )
                 continue
-            header = header_span = None
+            if (
+                line_match.start() in table_lines
+                or line.lstrip().startswith("|")
+                or len(cells(line)) > 1
+            ):
+                continue
             if line.lstrip().startswith("#"):
                 heading_span = [line_match.start(), line_match.end()]
                 continue
@@ -99,6 +110,8 @@ def units(sources):
 
 def permitted(question, unit):
     q, text = question.lower(), unit["text"]
+    if not scope_matches(question, unit) or not attribute_matches(question, unit):
+        return False
     asked_roles = [r for r in ROLES if re.search(rf"(?<![a-z0-9_]){r}(?![a-z0-9_])", q)]
     if asked_roles and unit["permission"] is not None:
         permission = unit["permission"].lower()
@@ -114,7 +127,11 @@ def permitted(question, unit):
         # 日期与签约事件必须同一证据句明确共现，交付标题的日期不能借用。
         if not DATE.search(text) or not re.search(r"签署|签订|签约", text):
             return False
-        if re.search(r"未|没有|无|尚未|不详", text):
+        if re.search(
+            r"尚未|未(?:签署|签订|签约|记载|提供|公布|说明)|没有(?:签署|签订|签约|记载|提供)|"
+            r"(?:日期|时间)(?:未知|不详|无记录)|(?:无|没有)(?:签署|签订|签约)(?:日期|时间|记录)",
+            text,
+        ):
             return False
         body = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
         if re.search(r"更新|编写|交付|修改", body) and not re.search(r"签署|签订|签约", body):
@@ -152,6 +169,8 @@ def render_plan(raw, question, sources):
     except (ValueError, KeyError, TypeError) as error:
         raise ModelFailure("ANSWER_PLAN_INVALID", "答案证据结构未通过验证") from error
     if not chosen:
+        return ABSTENTION
+    if not complete_scope(question, chosen):
         return ABSTENTION
     # 同时问每库与整个文件卷时，不能只回答其中一个指标。
     if re.search(r"每.*库|单.*库", question) and "文件卷" in question:

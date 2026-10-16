@@ -12,7 +12,7 @@ from sqlalchemy import select
 from app.core.errors import AppError
 from app.infrastructure.chat_model import ModelFailure
 from app.infrastructure.models import Citation, Conversation, Message
-from app.modules.chat.evidence import catalog, render_plan
+from app.modules.chat.evidence import ANSWER_MODE, catalog, render_plan
 from app.modules.chat.prompt import ABSTENTION, messages_for, validate_answer
 from app.modules.chat.schemas import (
     CitationResponse,
@@ -240,7 +240,7 @@ class ChatService:
                 retrieval_config=data.retrieval.model_dump(mode="json"),
                 model_config={
                     **self.model.snapshot(),
-                    "answer_mode": "extractive-v1",
+                    "answer_mode": ANSWER_MODE,
                     "selection_max_tokens": 256,
                 },
                 generation_deadline_at=now + timedelta(seconds=self.settings.chat_deadline_seconds),
@@ -446,7 +446,7 @@ class ChatService:
                     sources.append(source)
             run.sources = sources
             await emit("sources", {"candidates": sources})
-            run.timings["answer_mode"] = "extractive-v1"
+            run.timings["answer_mode"] = ANSWER_MODE
             if not catalog(answer_question, sources):
                 run.text = ABSTENTION
                 run.timings["first_token_ms"] = round((monotonic() - run.started) * 1000, 2)
