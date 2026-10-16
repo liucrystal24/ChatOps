@@ -117,3 +117,13 @@ TypeScript 7 的发布不自动证明 Vue 类型检查工具已经兼容。若�
 分块 API 已核对 [RecursiveCharacterTextSplitter](https://reference.langchain.com/python/langchain-text-splitters/character/RecursiveCharacterTextSplitter)，使用当前独立包及 keep_separator=end、add_start_index=True；中文字符长度与真实 tokenizer token_count 分开记录。
 
 官方 Embeddings 文档未列统一批量条数上限；本项目默认每批 8 条、本地参数上限 32，供应商拒绝时明确失败，不以本地上限宣称远端承诺。真实 PDF 两页批量已验证，8192 token 按每个文本限制执行。新增 python-multipart 0.0.32、pypdf 6.20.1、langchain-text-splitters 1.1.3、tokenizers 0.23.3，完整传递依赖在 uv.lock；API/Worker 启动不加载 pypdf/切分框架，只在受限解析子进程中加载。
+
+## 9. 阶段 5 核对（2026-10-15）
+
+- 聊天沿用 SiliconFlow Key，固定非 Pro `Qwen/Qwen3-8B`，关闭 thinking，HTTPX 直接消费 SSE，不新增 SDK/服务框架。官方文档列为免费小模型，当前 Key 的模型列表和真实流请求已成功；价格与账号权限以供应商当时控制台为准。[模型列表](https://api-docs.siliconflow.cn/docs/api/models-get)、[聊天接口](https://api-docs.siliconflow.cn/docs/api/chat-completions-post)、[官方免费模型说明](https://api-docs.siliconflow.cn/docs/usercases/use-siliconcloud-in-rikkahub)。
+- Qwen3 tokenizer 固定官方 revision `b968826d9c46dd6066d109eabc6255188de91218`，SHA-256 `aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4`，约 11.4 MB；加 BGE 约 28 MB，只下载分词器、不下载模型权重。[官方模型文件](https://huggingface.co/Qwen/Qwen3-8B/tree/b968826d9c46dd6066d109eabc6255188de91218)。计数实现对应无工具/无 reasoning 历史/关闭 thinking 的纯文本模板，另留 256 token 服务端模板差异；不是供应商账单计数。模型权重修订仍如实记 provider-managed。
+- 使用已锁定 FastAPI 0.143.1 的官方 `EventSourceResponse`/`ServerSentEvent`；已读取当前 routing 源码，响应前校验在普通 dependency 中完成，官方 producer 插入 15 秒 ping。前端 fetch POST 解析 UTF-8、CR/LF 与事件边界。[官方 SSE](https://fastapi.tiangolo.com/tutorial/server-sent-events/)、[Fetch 流](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)。
+- 新增锁定前端 `markdown-it 15.0.2`、类型 `@types/markdown-it 14.2.0`；禁原始 HTML、禁图片、链接仅 http(s)，加 noreferrer。[当前官方文档](https://markdown-it.github.io/markdown-it/)。其余核心依赖及基础镜像继续使用已验证版本，应用版本升至 0.5.0。
+- 配置：CHAT_MODEL 固定；CHAT_CONTEXT_TOKENS 默认/最大 16384、CHAT_OUTPUT_TOKENS 默认1024（128–2048）、CHAT_DEADLINE_SECONDS 默认/最大120、CHAT_READ_TIMEOUT_SECONDS 默认30（1–60），CHAT_TOKENIZER_PATH 默认镜像 assets。Compose 转发常用 model/deadline/output，其他显式配置须同步 Compose。流中每秒授权/来源复核及草稿保存不延长总 deadline。
+
+追问改写另核对 [SiliconFlow JSON mode](https://api-docs.siliconflow.cn/docs/userguide/guides/json-mode)：当前文档称线上语言模型均支持 response_format=json_object。实际 Qwen3-8B JSON 流和两轮改写已通过；仍验证 question 字段/问号/禁止历史引用，格式错误显式回退，不把 JSON 合法性当成语义正确。

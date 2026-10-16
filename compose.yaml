@@ -9,6 +9,9 @@ x-backend-environment: &backend-environment
   AUTH_TOKEN_TTL_SECONDS: ${AUTH_TOKEN_TTL_SECONDS:-1800}
   SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
   FILES_DIR: /data/files
+  CHAT_MODEL: ${CHAT_MODEL:-Qwen/Qwen3-8B}
+  CHAT_DEADLINE_SECONDS: ${CHAT_DEADLINE_SECONDS:-120}
+  CHAT_OUTPUT_TOKENS: ${CHAT_OUTPUT_TOKENS:-1024}
   EMBEDDING_BATCH_SIZE: ${EMBEDDING_BATCH_SIZE:-8}
   EMBEDDING_TIMEOUT_SECONDS: ${EMBEDDING_TIMEOUT_SECONDS:-30}
 
@@ -52,7 +55,7 @@ services:
 
   migrate:
     # 同一 runtime 构建使用不同标签，避免 Compose 并行导出同名镜像产生竞争。
-    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-migrate:0.4.0
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-migrate:0.5.0
     build: *backend-build
     environment: *backend-environment
     command: ["alembic", "upgrade", "head"]
@@ -61,7 +64,7 @@ services:
     restart: "no"
 
   api:
-    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-backend:0.4.0
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-backend:0.5.0
     build: *backend-build
     environment: *backend-environment
     volumes: ["files_data:/data/files"]
@@ -77,7 +80,7 @@ services:
     restart: unless-stopped
 
   worker:
-    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-worker:0.4.0
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-worker:0.5.0
     build: *backend-build
     environment: *backend-environment
     volumes: ["files_data:/data/files"]
@@ -89,7 +92,7 @@ services:
     restart: unless-stopped
 
   web:
-    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-web:0.4.0
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-web:0.5.0
     build:
       context: .
       dockerfile: deploy/web.Dockerfile
@@ -104,7 +107,7 @@ services:
     restart: unless-stopped
 
   test:
-    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-test:0.4.0
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-test:0.5.0
     profiles: ["test"]
     build:
       context: .

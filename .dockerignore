@@ -18,3 +18,5 @@ logs
 
 **/.local-files
 backend/assets/*tokenizer.json
+
+evaluation/outputs

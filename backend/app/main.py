@@ -4,6 +4,7 @@ import httpx
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from app.api.chat import router as chat_router
 from app.api.documents import router as document_router
 from app.api.health import router
 from app.api.identity import router as identity_router
@@ -14,14 +15,19 @@ from app.core.logging import RequestContextMiddleware, configure_logging
 from app.core.pagination import Cursors
 from app.core.security import LoginLimiter, Security
 from app.core.upload_limit import UploadLimitMiddleware
+from app.infrastructure.chat_model import ChatModel
 from app.infrastructure.database import create_engine, expected_heads
+from app.infrastructure.embedding import Embedding
 from app.infrastructure.files import Files
 from app.infrastructure.health import DependencyProbes
 from app.infrastructure.repositories import Database
+from app.infrastructure.vectors import Vectors
+from app.modules.chat.service import ChatService
 from app.modules.documents.service import DocumentService
 from app.modules.health.service import HealthService
 from app.modules.identity.service import IdentityService
 from app.modules.knowledge_bases.service import KnowledgeBaseService
+from app.modules.retrieval.service import RetrievalService
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -32,6 +38,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         engine = create_engine(config)
         database = Database(async_sessionmaker(engine, expire_on_commit=False))
         security = Security(config)
+        embedding, vectors, chat_model = Embedding(config), Vectors(config), ChatModel(config)
+        app.state.chat_service = ChatService(
+            database,
+            RetrievalService(database, embedding, vectors, config),
+            chat_model,
+            Cursors(config.auth_secret.get_secret_value()),
+            config,
+        )
         app.state.identity_service = IdentityService(database, security, LoginLimiter())
         app.state.knowledge_base_service = KnowledgeBaseService(
             database, Cursors(config.auth_secret.get_secret_value())
@@ -50,14 +64,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 app.state.health_service = HealthService(
                     DependencyProbes(
                         engine, client, expected_heads(), config.health_timeout_seconds
-                    )
+                    ),
+                    rag_configured=chat_model.configured,
                 )
                 yield
         finally:
+            await embedding.close()
+            await vectors.close()
+            await chat_model.close()
             await engine.dispose()
             security.close()
 
-    app = FastAPI(title="Chat RAG API", version="0.4.0", lifespan=lifespan)
+    app = FastAPI(title="Chat RAG API", version="0.5.0", lifespan=lifespan)
     install_error_handlers(app)
     app.add_middleware(UploadLimitMiddleware)
     app.add_middleware(RequestContextMiddleware)
@@ -69,4 +87,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(identity_router, responses=errors)
     app.include_router(knowledge_base_router, responses=errors)
     app.include_router(document_router, responses=errors)
+    app.include_router(chat_router, responses=errors)
     return app

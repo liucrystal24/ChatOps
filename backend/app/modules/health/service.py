@@ -25,8 +25,8 @@ class Checks(HealthModel):
 
 
 class Capabilities(HealthModel):
-    rag_configured: Literal[False] = False
-    rag_available: Literal[False] = False
+    rag_configured: bool = False
+    rag_available: bool = False
 
 
 class ReadyResponse(HealthModel):
@@ -36,14 +36,15 @@ class ReadyResponse(HealthModel):
 
 
 class HealthService:
-    def __init__(self, probes: DependencyProbes):
+    def __init__(self, probes: DependencyProbes, rag_configured=False):
         self.probes = probes
+        self.rag_configured = rag_configured
 
     async def readiness(self) -> ReadyResponse:
         (mysql, migrations), qdrant = await asyncio.gather(
             self.probes.mysql(), self.probes.qdrant()
         )
-        # 缺模型配置不影响基础服务就绪，但本阶段也不能宣称 RAG 已实现。
+        # 健康检查不调用付费/外部模型；available 只表示配置和基础依赖满足，非供应商实时探活。
         ready = all(value == "ok" for value in (mysql, migrations, qdrant))
         return ReadyResponse(
             status="ok" if ready else "unavailable",
@@ -51,5 +52,8 @@ class HealthService:
                 mysql=Check(status=mysql),
                 qdrant=Check(status=qdrant),
                 migrations=Check(status=migrations),
+            ),
+            capabilities=Capabilities(
+                rag_configured=self.rag_configured, rag_available=self.rag_configured and ready
             ),
         )

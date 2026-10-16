@@ -45,6 +45,9 @@ def test_mysql_migrations_readiness_and_idempotency(settings):
 
     existing = asyncio.run(tables())
     expected = {
+        "conversations",
+        "messages",
+        "message_citations",
         "documents",
         "jobs",
         "document_index_versions",

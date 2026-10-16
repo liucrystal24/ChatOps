@@ -1,4 +1,4 @@
-# 接口契约 v0.4
+# 接口契约 v0.5
 
 阶段 4 实现健康、身份、知识库、成员、文档、任务和来源接口，以及无 HTTP 临时入口的 Dense 检索服务；问答和 SSE 仍为后续设计契约。各阶段通过 Pydantic 和 FastAPI OpenAPI 落实，只声明当阶段已实现的路由；SSE 事件另按本文件验证。报文示例用于说明结构，不是实际运行数据。
 
@@ -43,9 +43,9 @@ ready 输出还可包含 `capabilities.rag_configured`，只是配置状态，�
 
 ### 阶段 2 健康接口细化（2026-10-15）
 
-`/health/ready` 返回固定结构：`{status: "ok" | "unavailable", checks: {mysql: {status}, qdrant: {status}, migrations: {status}}, capabilities: {rag_configured: false, rag_available: false}}`。检查状态为 `ok`、`unavailable` 或 `pending`；迁移未到代码中的 Alembic head（含空库）为 pending，数据库不可连时为 unavailable。任一检查非 ok，HTTP 为 503；此响应属于健康报告，不套通用错误体。
+`/health/ready` 返回固定结构：`{status: "ok" | "unavailable", checks: {mysql: {status}, qdrant: {status}, migrations: {status}}, capabilities: {rag_configured: boolean, rag_available: boolean}}`。检查状态为 `ok`、`unavailable` 或 `pending`；迁移未到代码中的 Alembic head（含空库）为 pending，数据库不可连时为 unavailable。任一检查非 ok，HTTP 为 503；此响应属于健康报告，不套通用错误体。
 
-MySQL 执行真实查询；Qdrant 请求带 API key 的 `/collections`，同时验证连通和凭据，避免仅检查无需鉴权的 `/readyz` 造成错误配置也显示就绪。每项探测有超时，不调用模型。第二阶段没有模型适配器，两个 RAG 能力值固定 false；到 AI 阶段再根据完整配置与实现计算。Web 同源代理 `/api/health/*` 到后端 `/health/*`，业务路径 `/api/v1/*` 原样转发。
+MySQL 执行真实查询；Qdrant 请求带 API key 的 `/collections`，同时验证连通和凭据，避免仅检查无需鉴权的 `/readyz` 造成错误配置也显示就绪。每项探测有超时，不调用模型。阶段 5 rag_configured 表示已配置模型 Key，rag_available 表示配置和三项基础依赖就绪；不探测供应商、不代表远端实时可用。Web 同源代理 `/api/health/*` 到后端 `/health/*`，业务路径 `/api/v1/*` 原样转发。
 
 `X-Request-ID` 接受 1–64 位 ASCII 字母、数字、`_`、`-`，非法值重新生成 UUID；所有 JSON 响应回传该头。阶段 2 错误码为 `VALIDATION_ERROR` (422)、`RESOURCE_NOT_FOUND` (404)、`METHOD_NOT_ALLOWED` (405)、`HTTP_ERROR`（其他 HTTP 错误）、`INTERNAL_ERROR` (500)。校验错误只返回字段位置与类型，不返回输入值、异常消息或异常上下文。
 
@@ -187,7 +187,7 @@ data: {"message_id":"<uuid>","status":"completed","answer_type":"abstention","ci
 
 ```
 
-响应头：`Content-Type: text/event-stream`、`Cache-Control: no-cache, no-transform`、`X-Accel-Buffering: no`；代理关闭缓冲、读取超时大于服务总 deadline。前端 fetch POST 带 Authorization，验证 response.ok 与内容类型后才消费 SSE。
+响应头：`Content-Type: text/event-stream`、`Cache-Control: no-store, no-transform`、`X-Accel-Buffering: no`；代理关闭缓冲、读取超时大于服务总 deadline。前端 fetch POST 带 Authorization，验证 response.ok 与内容类型后才消费 SSE。
 
 客户端不能把网络 packet 当完整事件；解析器必须处理一个事件跨多个网络块、多个事件在一块、UTF-8 汉字拆分、JSON 转义和终止事件。正文作为流中草稿展示，收到 done 后确认保存。EOF 未收到 done/error 时显示连接中断，并通过 GET 消息核验；禁止自动二次发起 POST。
 
@@ -213,3 +213,8 @@ data: {"message_id":"<uuid>","status":"completed","answer_type":"abstention","ci
 阶段 4 来源页增加当前有效版本 Chunk 分页入口，便于尚无问答引用时核验正文和 PDF 页码；不增加临时检索 HTTP 路由。
 
 阶段 4 对空库删除补充约束：存在 purged_at 为空的已删除文档时也返回 KB_NOT_EMPTY，避免删除父库后无法授权重试失败的文件清理。
+
+
+阶段 5 已实现补充：Conversation 返回 `id,kb_id,title,active_message_id,created_at,updated_at`；列表 `{items,next_cursor}`，使用通用 limit/cursor，conversation 列表可选 kb_id。Message 返回 id/conversation_id/sequence_no/role/status/content/client_request_id/reply_to_message_id/answer_type/error_code/citations/usage/timings/created_at/completed_at；不返回内部模型配置或未验证候选。消息分页按创建时间倒序，前端按 sequence_no 显示。历史引用返回 source_label/chunk_id/document_id/index_version_id/available/filename/page_no/section_title；失效时定位字段为 null，不通过快照泄露已删除资料。
+
+来源 excerpt 最多 2,000 字符，并返回 char_start/char_end；done 中的引用是本轮最终来源，GET 消息时另算当前 available。明确拒答的无引用模型草稿可被保守压缩为固定拒答句，done 后以消息事实替换流中草稿。其他未知或缺少引用仍失败。新错误包括 CONTEXT_TOKEN_LIMIT(422)、TOKENIZER_UNAVAILABLE(503)、CONVERSATION_BUSY/REQUEST_ALREADY_EXISTS(409)，后两者 details.message_id 可用于读取状态；流内还可能返回 SOURCE_CHANGED、GENERATION_TIMEOUT/INTERRUPTED/FAILED、MODEL_REQUEST_REJECTED/OUTPUT_INCOMPLETE/STREAM_INCOMPLETE/RESPONSE_INVALID、UPSTREAM_UNAVAILABLE/TIMEOUT。SSE error 不保证此前已收到 start，客户端使用其 message_id 核验。

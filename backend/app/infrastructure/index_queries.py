@@ -1,6 +1,6 @@
 from sqlalchemy import delete, func, select
 
-from app.infrastructure.models import Chunk, Document, IndexVersion, Job, KnowledgeBase
+from app.infrastructure.models import Chunk, Citation, Document, IndexVersion, Job, KnowledgeBase
 
 
 class IndexQueries:
@@ -56,7 +56,13 @@ class IndexQueries:
         return (await self.session.scalars(query.order_by(IndexVersion.id).limit(50))).all()
 
     async def discard_chunks(self, version_id):
-        await self.session.execute(delete(Chunk).where(Chunk.index_version_id == version_id))
+        # 历史引用保留旧片段供内部追溯；来源读取仍要求当前文档版本有效。
+        await self.session.execute(
+            delete(Chunk).where(
+                Chunk.index_version_id == version_id,
+                ~select(Citation.id).where(Citation.chunk_id == Chunk.id).exists(),
+            )
+        )
 
     async def active_versions(self, kb_id=None, after=None):
         query = (

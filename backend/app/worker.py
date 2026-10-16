@@ -14,6 +14,7 @@ from app.infrastructure.embedding import Embedding
 from app.infrastructure.files import Files
 from app.infrastructure.repositories import Database
 from app.infrastructure.vectors import Vectors
+from app.modules.chat.service import recover_expired
 from app.modules.indexing.service import IndexingService
 
 
@@ -40,6 +41,7 @@ async def main():
                 if time.monotonic() - last_maintenance >= 60:
                     await service.maintain()
                     last_maintenance = time.monotonic()
+                await recover_expired(service.database)
                 task = asyncio.create_task(service.run_once())
                 stop = asyncio.create_task(stopped.wait())
                 done, _ = await asyncio.wait([task, stop], return_when=asyncio.FIRST_COMPLETED)

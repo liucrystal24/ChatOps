@@ -71,7 +71,7 @@ class Membership(Timestamps, Base):
 
 
 # 循环指针后建复合外键，保证当前任务/有效版本确实属于同一文档和知识库。
-from sqlalchemy import BigInteger, ForeignKeyConstraint, Integer, UniqueConstraint  # noqa: E402
+from sqlalchemy import BigInteger, Double, ForeignKeyConstraint, Integer, UniqueConstraint  # noqa: E402
 from sqlalchemy.dialects.mysql import MEDIUMTEXT  # noqa: E402
 
 
@@ -203,6 +203,7 @@ class IndexVersion(Base):
 class Chunk(Base):
     __tablename__ = "chunks"
     __table_args__ = (
+        UniqueConstraint("id", "document_id", "index_version_id", name="uq_chunk_citation_scope"),
         UniqueConstraint("index_version_id", "ordinal", name="uq_chunk_ordinal"),
         ForeignKeyConstraint(
             ["index_version_id", "document_id", "kb_id"],
@@ -231,6 +232,100 @@ class Chunk(Base):
     char_end: Mapped[int] = mapped_column(Integer)
     token_count: Mapped[int | None] = mapped_column(Integer)
     metadata_json: Mapped[dict] = mapped_column("metadata", JSON)
+    created_at: Mapped[datetime] = mapped_column(
+        DATETIME(fsp=6), server_default=sql_text("CURRENT_TIMESTAMP(6)")
+    )
+
+
+class Conversation(Timestamps, Base):
+    __tablename__ = "conversations"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["active_message_id", "id"],
+            ["messages.id", "messages.conversation_id"],
+            name="fk_conversation_active_message",
+            use_alter=True,
+        ),
+        CheckConstraint("next_sequence_no > 0", name="ck_conversation_sequence"),
+        Index("ix_conversation_user_created", "user_id", "created_at", "id"),
+        Index("ix_conversation_user_updated", "user_id", "updated_at"),
+    )
+    id: Mapped[str] = mapped_column(CHAR(36, charset="ascii"), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    kb_id: Mapped[str] = mapped_column(ForeignKey("knowledge_bases.id"))
+    title: Mapped[str] = mapped_column(String(120))
+    next_sequence_no: Mapped[int] = mapped_column(Integer, default=1)
+    active_message_id: Mapped[str | None] = mapped_column(CHAR(36, charset="ascii"))
+
+
+class Message(Base):
+    __tablename__ = "messages"
+    __table_args__ = (
+        UniqueConstraint("id", "conversation_id", name="uq_message_scope"),
+        UniqueConstraint("conversation_id", "sequence_no", name="uq_message_sequence"),
+        UniqueConstraint("conversation_id", "client_request_id", name="uq_message_request"),
+        ForeignKeyConstraint(
+            ["reply_to_message_id", "conversation_id"],
+            ["messages.id", "messages.conversation_id"],
+            name="fk_message_reply",
+        ),
+        CheckConstraint("sequence_no > 0", name="ck_message_sequence"),
+        CheckConstraint("role IN ('user','assistant')", name="ck_message_role"),
+        CheckConstraint(
+            "status IN ('completed','generating','failed','cancelled','interrupted')",
+            name="ck_message_status",
+        ),
+        CheckConstraint(
+            "(role='user' AND client_request_id IS NOT NULL AND status='completed' "
+            "AND reply_to_message_id IS NULL) OR "
+            "(role='assistant' AND client_request_id IS NULL AND reply_to_message_id IS NOT NULL)",
+            name="ck_message_request_role",
+        ),
+        Index("ix_message_deadline", "status", "generation_deadline_at"),
+    )
+    id: Mapped[str] = mapped_column(CHAR(36, charset="ascii"), primary_key=True)
+    conversation_id: Mapped[str] = mapped_column(ForeignKey("conversations.id"))
+    sequence_no: Mapped[int] = mapped_column(Integer)
+    role: Mapped[str] = mapped_column(String(16, collation="utf8mb4_bin"))
+    status: Mapped[str] = mapped_column(String(20, collation="utf8mb4_bin"))
+    content: Mapped[str] = mapped_column(MEDIUMTEXT, default="")
+    client_request_id: Mapped[str | None] = mapped_column(CHAR(36, charset="ascii"))
+    reply_to_message_id: Mapped[str | None] = mapped_column(CHAR(36, charset="ascii"))
+    retrieval_query: Mapped[str | None] = mapped_column(Text)
+    retrieval_config: Mapped[dict | None] = mapped_column(JSON(none_as_null=True))
+    model_config: Mapped[dict | None] = mapped_column(JSON(none_as_null=True))
+    usage: Mapped[dict | None] = mapped_column(JSON(none_as_null=True))
+    timings: Mapped[dict | None] = mapped_column(JSON(none_as_null=True))
+    answer_type: Mapped[str | None] = mapped_column(String(16))
+    error_code: Mapped[str | None] = mapped_column(String(64))
+    generation_deadline_at: Mapped[datetime | None] = mapped_column(DATETIME(fsp=6))
+    heartbeat_at: Mapped[datetime | None] = mapped_column(DATETIME(fsp=6))
+    created_at: Mapped[datetime] = mapped_column(
+        DATETIME(fsp=6), server_default=sql_text("CURRENT_TIMESTAMP(6)")
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DATETIME(fsp=6))
+
+
+class Citation(Base):
+    __tablename__ = "message_citations"
+    __table_args__ = (
+        UniqueConstraint("message_id", "source_label", name="uq_citation_label"),
+        ForeignKeyConstraint(
+            ["chunk_id", "document_id", "index_version_id"],
+            ["chunks.id", "chunks.document_id", "chunks.index_version_id"],
+            name="fk_citation_chunk_scope",
+        ),
+        Index("ix_citation_chunk", "chunk_id"),
+    )
+    id: Mapped[str] = mapped_column(CHAR(36, charset="ascii"), primary_key=True)
+    message_id: Mapped[str] = mapped_column(ForeignKey("messages.id"))
+    source_label: Mapped[str] = mapped_column(String(16))
+    document_id: Mapped[str] = mapped_column(ForeignKey("documents.id"))
+    index_version_id: Mapped[str] = mapped_column(ForeignKey("document_index_versions.id"))
+    chunk_id: Mapped[str] = mapped_column(ForeignKey("chunks.id"))
+    locator_snapshot: Mapped[dict] = mapped_column(JSON)
+    retrieval_score: Mapped[float | None] = mapped_column(Double)
+    rerank_score: Mapped[float | None] = mapped_column(Double)
     created_at: Mapped[datetime] = mapped_column(
         DATETIME(fsp=6), server_default=sql_text("CURRENT_TIMESTAMP(6)")
     )

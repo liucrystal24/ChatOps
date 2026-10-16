@@ -2,11 +2,11 @@
 
 面向本地部署和技术展示的模块化单体，按阶段实现权限隔离、文档索引、可追溯问答与可复现评测。
 
-**阶段 4：文档索引与真实 Dense 检索（已完成并验收）。** 已接入上传、后台 Worker、TXT/Markdown/文字 PDF、真实硅基流动 `BAAI/bge-m3`、来源读取与权限内检索服务。聊天、LLM 和 SSE 在阶段 5 实现；目前仍不能称为完整 RAG 问答助手。检查与限制见[阶段 4 交付记录](docs/stage-4-delivery.md)。
+**阶段 5：真实多轮流式问答已实现，质量验收进行中。** 已接入文档索引、云端 `BAAI/bge-m3` + `Qwen/Qwen3-8B`、会话历史、SSE、权限复核和来源引用。固定题集的证据召回尚未达到预设门槛，人工质量复核待完成，暂不标记 MVP 全部验收通过。实际检查与限制见[阶段 5 交付记录](docs/stage-5-delivery.md)。
 
 ## 启动与升级
 
-需要 Docker Desktop/Compose 和生成配置用的 Python。首次构建访问 Docker Hub、GHCR、PyPI、npm 和 Hugging Face；只下载约 17 MB 的固定分词器，不下载模型权重、无需显卡。
+需要 Docker Desktop/Compose 和生成配置用的 Python。首次构建访问 Docker Hub、GHCR、PyPI、npm 和 Hugging Face；只下载合计约 28 MB 的两个固定分词器，不下载模型权重、无需显卡。
 
 在项目根目录执行：
 
@@ -17,7 +17,7 @@ python3 scripts/init_env.py
 python3 scripts/init_env.py --upgrade
 ```
 
-在已有 `.env` 末尾配置 `SILICONFLOW_API_KEY=你的真实Key`，不提交密钥。选择免费非 Pro 模型 `BAAI/bge-m3`；模型标识不能任意替换。Embedding 需要联网，文件片段与问题会发送给供应商。当前价格及账号可用性以供应商控制台为准。
+在已有 `.env` 末尾配置 `SILICONFLOW_API_KEY=你的真实Key`，不提交密钥。选择非 Pro `BAAI/bge-m3` 和 `Qwen/Qwen3-8B`，共用已有 Key；模型标识不能任意替换。两者均使用云端 API，不需要本地部署模型。索引和问答需要联网，获授权的文件片段、问题与必要追问历史会发送给供应商。当前价格及账号可用性以供应商控制台为准。
 
 ```bash
 docker compose config --quiet
@@ -108,24 +108,24 @@ uv run --frozen --env-file ../.env uvicorn app.main:create_app --factory --host 
 
 生产只开放 Web loopback；Navicat 本机连接需叠加开发配置启动 mysql，使用 127.0.0.1:3307、`.env` 的 MYSQL_USER/MYSQL_PASSWORD、MYSQL_DATABASE。实际表名是 `knowledge_base_members`。
 
-[实际 OpenAPI 快照](docs/openapi.json) 只含已经实现的健康、身份、知识库、文档、任务和来源接口。宿主 API 启动后访问 [OpenAPI](http://127.0.0.1:8000/openapi.json)、[Swagger](http://127.0.0.1:8000/docs)；Web 不代理这些元数据入口。
+[实际 OpenAPI 快照](docs/openapi.json) 只含已经实现的健康、身份、知识库、文档、任务、来源、会话和问答流接口。宿主 API 启动后访问 [OpenAPI](http://127.0.0.1:8000/openapi.json)、[Swagger](http://127.0.0.1:8000/docs)；Web 不代理这些元数据入口。
 
 ## 独立真实服务验收
 
 ```bash
-python3 scripts/verify_stage4.py
+python3 scripts/verify_stage5.py
 ```
 
-仅复查已构建服务的网络、故障恢复与持久化，可执行 `python3 scripts/verify_stage4.py --services-only`；该模式不构建或运行 pytest。本轮测试与服务检查分别完成，精确执行记录见交付文档。
+仅复查已构建服务的网络、故障恢复与持久化，可执行 `python3 scripts/verify_stage5.py --services-only`；该模式不构建或运行 pytest。本轮测试与服务检查分别完成，精确执行记录见交付文档。
 
-使用专用 `chat-rag-stage4-test` 项目、`*_test` 数据库、18082 Web 端口和独立数据卷，构建运行/测试镜像并执行 unit、真实 MySQL/Qdrant integration 及真实 Embedding live。Key 从进程环境或本地 `.env` 读取，不复制到测试配置文件、不打印；其他测试账号/JWT/密码仅用于本次测试，日志脱敏。
+使用专用 `chat-rag-stage5-test` 项目、`*_test` 数据库、18083 Web 端口和独立数据卷，构建运行/测试镜像并执行 unit、真实 MySQL/Qdrant integration 及真实 Embedding/LLM live。Key 从进程环境或本地 `.env` 读取，不复制到测试配置文件、不打印；其他测试账号/JWT/密码仅用于本次测试，日志脱敏。
 
 验收包括迁移回退/升级、权限/配额、真实 Worker 进程终止后的租约恢复、迟到发布、有限重试、真实中文与 PDF 页码检索、重复 upsert、撤权/删除残留过滤、原文件共享卷、数据服务故障和重建持久化。只清理本次 UUID/collection，不清空业务库；迁移回退前要求专用库没有业务记录，否则拒绝。
 
 默认 `pytest` 仅 unit，integration/live 必须显式开启；测试向量只出现在明确的测试替身中，live 使用真实模型。详细执行结果、未验证项在交付记录中，未运行项不算通过。停止测试项目并保留卷：
 
 ```bash
-docker compose --env-file .env.stage4-test -p chat-rag-stage4-test down
+docker compose --env-file .env.stage5-test -p chat-rag-stage5-test down
 ```
 
 ## 配置与健康
@@ -136,8 +136,9 @@ docker compose --env-file .env.stage4-test -p chat-rag-stage4-test down
 | DATABASE_URL | 本机 mysql+asyncmy 连接串，charset=utf8mb4 |
 | QDRANT_URL / QDRANT_API_KEY | 向量库地址及至少 32 字符的密钥 |
 | AUTH_SECRET / AUTH_TOKEN_TTL_SECONDS | 至少 32 字符的签名密钥；默认 1800 秒 |
-| SILICONFLOW_API_KEY | 真实免费版 BAAI/bge-m3 凭据，只在服务端 |
+| SILICONFLOW_API_KEY | BAAI/bge-m3 和 Qwen3-8B 共用云端凭据，只在服务端 |
 | EMBEDDING_BATCH_SIZE / EMBEDDING_TIMEOUT_SECONDS | 每批默认 8 条（1–32），单次默认 30 秒（1–60） |
+| CHAT_MODEL / CHAT_OUTPUT_TOKENS / CHAT_DEADLINE_SECONDS | 固定 Qwen/Qwen3-8B；输出默认1024 token，总问答默认120秒 |
 | FILES_DIR | API/Worker 共同文件目录，Compose 固定 /data/files |
 | HEALTH_TIMEOUT_SECONDS | 基础依赖探测默认 3 秒 |
 | WEB_PORT / MYSQL_PORT / QDRANT_PORT | 默认 8080/3307/6333；后两者仅开发配置开放 |
@@ -145,7 +146,7 @@ docker compose --env-file .env.stage4-test -p chat-rag-stage4-test down
 
 保护上限还可在后端环境中调低：UPLOAD_MAX_BYTES、KB_DOCUMENT_LIMIT、KB_MAX_BYTES、FILES_MAX_BYTES；解析/任务配置见 `Settings`。Compose 的常用环境转发范围在 compose.yaml 中明确，其余需要同时更新 Compose 才会生效。租约默认 90 秒/心跳 20 秒，总任务 15 分钟，单次解析 60 秒，自动最多尝试 3 次，瞬时故障退避重试；永久格式/模型错误直接失败。
 
-`/health/live` 只检查进程；`/health/ready` 检查 MySQL、Qdrant 和实际迁移版本，不消耗模型额度。`rag_configured`/`rag_available` 仍 false，因为阶段 5 的 LLM 问答尚未实现；不代表 Embedding 未接入。API/Worker 日志不记录正文、密码、token、供应商原始响应或内部 SQL；本地 `.env` 和运行产物均被忽略。
+`/health/live` 只检查进程；`/health/ready` 检查 MySQL、Qdrant 和实际迁移版本，不消耗模型额度。`rag_configured` 表示 Key 已配置，`rag_available` 表示配置和基础依赖就绪；健康检查不证明供应商实时连通，实际调用失败会在问答中显示。API/Worker 日志不记录正文、密码、token、供应商原始响应或内部 SQL；本地 `.env` 和运行产物均被忽略。
 
 ## 文档与下一阶段
 
@@ -158,6 +159,18 @@ docker compose --env-file .env.stage4-test -p chat-rag-stage4-test down
 - [阶段 2 交付记录](docs/stage-2-delivery.md)
 - [阶段 3 交付记录](docs/stage-3-delivery.md)
 - [阶段 4 交付记录](docs/stage-4-delivery.md)
+- [阶段 5 交付记录](docs/stage-5-delivery.md)
+- [备份与恢复](docs/backup-and-restore.md)
+- [公开评测与人工复核](evaluation/README.md)
 - [协作规则](AGENTS.md)
 
 阶段 5 需要另行授权并选择真实聊天 LLM，随后实现多轮会话、流式回答、引用核验、拒答与评测。阶段 4 的检索通过不等于已经完成问答质量评测。
+
+
+## 问答演示
+
+登录后选择知识库，上传公开或获授权的 TXT/Markdown/文字 PDF，等待文档显示“可检索”。在“知识库问答”输入问题，再追问“那地点在哪里？”；流中内容标为草稿，保存后显示最终引用，点击引用重新鉴权并查看原始片段。没有依据时显示固定拒答。可新建/切换会话、刷新历史、停止生成；浏览器断线会核验消息状态，不自动重发问题。生成中的同一会话不接受第二个请求。
+
+固定公开题集运行方式见 evaluation/README.md；真实报告在忽略提交的 evaluation/outputs。初版标注由 Agent 起草，不能冒充用户人工质量验收。阶段5质量门槛通过前不进入阶段6的 Hybrid/Rerank 实现。
+
+本机已为 Navicat 开放 3307 时，升级也应叠加相同开发配置以保留端口：`docker compose -f compose.yaml -f compose.dev.yaml up --build -d --wait`。本轮更新现有实例采用先运行 migrate，再仅重建 API/Worker/Web，保留原 MySQL/Qdrant 容器及数据卷。

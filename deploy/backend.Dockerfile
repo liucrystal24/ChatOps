@@ -6,6 +6,8 @@ WORKDIR /app
 COPY backend/pyproject.toml backend/uv.lock ./
 COPY scripts/fetch_tokenizer.py /tmp/fetch_tokenizer.py
 RUN python /tmp/fetch_tokenizer.py /app/assets/bge-m3-tokenizer.json
+COPY scripts/fetch_chat_tokenizer.py /tmp/fetch_chat_tokenizer.py
+RUN python /tmp/fetch_chat_tokenizer.py /app/assets/qwen3-tokenizer.json
 
 FROM base AS runtime
 RUN uv sync --frozen --no-dev

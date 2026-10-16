@@ -141,7 +141,7 @@ onUnmounted(() => { alive = false; pending.clear(); if (timer) clearTimeout(time
 <template>
   <section class="section-divider document-panel" aria-label="知识库文档">
     <div class="heading-row"><h3>文档与索引</h3><ElButton :disabled="busy" @click="perform(reload)">刷新文档</ElButton></div>
-    <p class="muted">支持 UTF-8 TXT、Markdown 和文字 PDF，单文件最多 10 MiB；扫描 PDF 暂不支持。问答将在后续阶段接入。</p>
+    <p class="muted">支持 UTF-8 TXT、Markdown 和文字 PDF，单文件最多 10 MiB；扫描 PDF 暂不支持。索引完成后可在上方提问并核验来源。</p>
     <ElAlert v-if="error" :title="error" type="error" :closable="false" class="feedback" />
     <ElAlert v-if="notice" :title="notice" type="success" :closable="false" class="feedback" />
     <form v-if="canWrite && !inaccessible" class="upload-form" @submit.prevent="upload">

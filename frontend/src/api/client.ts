@@ -19,7 +19,7 @@ let generation = 0
 let sessionController = new AbortController()
 
 export class ApiError extends Error {
-  constructor(public code: string, message: string, public status = 0, public requestId = '') {
+  constructor(public code: string, message: string, public status = 0, public requestId = '', public details: Record<string, unknown> = {}) {
     super(message)
   }
 }
@@ -45,7 +45,7 @@ export async function request<T>(path: string, init: RequestInit = {}, format: '
   try {
     const response = await fetch(`/api/v1${path}`, {
       ...init, headers, cache: 'no-store',
-      signal: AbortSignal.any([sessionController.signal, AbortSignal.timeout(15000)]),
+      signal: AbortSignal.any([sessionController.signal, AbortSignal.timeout(15000), ...(init.signal ? [init.signal] : [])]),
     })
     if (epoch !== generation) throw new ApiError('REQUEST_CANCELLED', '请求已取消')
     if (!response.ok) {
@@ -80,5 +80,35 @@ export async function login(username: string, password: string): Promise<void> {
   } catch (error) {
     if (epoch === generation) logout()
     throw error
+  }
+}
+
+export async function* streamRequest(path: string, body: unknown, signal: AbortSignal): AsyncGenerator<Uint8Array> {
+  const epoch = generation
+  const combined = AbortSignal.any([signal, sessionController.signal, AbortSignal.timeout(130000)])
+  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
+  try {
+    const response = await fetch(`/api/v1${path}`, {
+      method: 'POST', body: JSON.stringify(body), cache: 'no-store', signal: combined,
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+    })
+    if (epoch !== generation) throw new ApiError('REQUEST_CANCELLED', '请求已取消')
+    if (!response.ok) {
+      const data = await response.json().catch(() => null)
+      if (epoch !== generation) throw new ApiError('REQUEST_CANCELLED', '请求已取消')
+      if (response.status === 401) logout('会话已失效，请重新登录')
+      throw new ApiError(data?.error?.code ?? 'HTTP_ERROR', data?.error?.message ?? '问答请求失败', response.status, data?.error?.request_id ?? '', data?.error?.details ?? {})
+    }
+    if (!response.headers.get('content-type')?.startsWith('text/event-stream') || !response.body) throw new ApiError('INVALID_STREAM', '服务未返回问答流')
+    reader = response.body.getReader()
+    while (true) {
+      const { value, done } = await reader.read()
+      if (epoch !== generation) throw new ApiError('REQUEST_CANCELLED', '请求已取消')
+      if (done) break
+      yield value
+    }
+  } finally {
+    await reader?.cancel().catch(() => undefined)
+    reader?.releaseLock()
   }
 }

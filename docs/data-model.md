@@ -1,6 +1,6 @@
 # 核心数据模型
 
-阶段 4 已通过 Alembic 实现 users、knowledge_bases、knowledge_base_members、authorization_guard，以及 documents、jobs、document_index_versions、chunks；阶段 5 会话表仍为逻辑/物理设计基线。表随阶段增量创建，不一次建齐全部业务表。
+阶段 4 已通过 Alembic 实现 users、knowledge_bases、knowledge_base_members、authorization_guard，以及 documents、jobs、document_index_versions、chunks；阶段 5 已通过 0004_chat 实现 conversations、messages、message_citations。表随阶段增量创建，不一次建齐全部业务表。
 
 阶段 2 的 `0001_baseline` 是空业务迁移，仅由 Alembic 建立 `alembic_version` 并记录基线，不创建用户等业务表。就绪检查比较数据库 revision 集合与本地迁移 head 集合，避免数据库落后或超前时误报就绪。
 
@@ -132,7 +132,7 @@ erDiagram
 
 ### messages（阶段 5）
 
-字段：`id` PK、`conversation_id` FK、`sequence_no INT`、`role VARCHAR(16)`（user/assistant）、`status VARCHAR(20)`（completed/generating/failed/cancelled/interrupted）、`content MEDIUMTEXT`、`client_request_id` 可空 UUID、`reply_to_message_id` 可空 FK、`retrieval_query TEXT NULL`、`retrieval_config JSON NULL`、`model_config JSON NULL`、`usage JSON NULL`、`timings JSON NULL`、`error_code`、`generation_deadline_at/heartbeat_at`、创建/完成时间。
+字段：`id` PK、`conversation_id` FK、`sequence_no INT`、`role VARCHAR(16)`（user/assistant）、`status VARCHAR(20)`（completed/generating/failed/cancelled/interrupted）、`content MEDIUMTEXT`、`client_request_id` 可空 UUID、`reply_to_message_id` 可空 FK、`retrieval_query TEXT NULL`、`retrieval_config JSON NULL`、`model_config JSON NULL`、`usage JSON NULL`、`timings JSON NULL`、`answer_type VARCHAR(16) NULL`（answer/abstention）、`error_code`、`generation_deadline_at/heartbeat_at`、创建/完成时间。
 
 唯一键 `(conversation_id, sequence_no)`、`(conversation_id, client_request_id)`；只有 user 消息填写 client_request_id，assistant 设 NULL，避免同请求两条消息冲突。一个事务插入用户消息、generating 助手消息并占用会话生成槽。结束事务保存状态、引用并释放槽；巡检处理崩溃遗留槽。
 
@@ -172,3 +172,5 @@ MVP 使用版本化 JSONL 题集和单次运行的 JSON/Markdown 报告，不新
 题集以文件 SHA-256、页码/标题、证据片段定位，不依赖每次重建变化的 Chunk UUID。执行时解析为本次真实数据库资源并记录配置、模型、索引版本和题集哈希。未来需要评测管理 UI 时再增加 evaluation_runs/results 表。
 
 阶段 4 实施补充：documents 增加 `file_type`（txt/md/pdf）、`purged_at`，jobs 的 `stage` 初始可为 queued；清理完成不删除文档/任务历史，purged_at 记录文件清理状态。versions 的 `config_snapshot` 保存解析、切分、tokenizer、模型 profile；不保存密钥。父子复合 FK 在迁移中实际落地，两个循环指针使用命名可空复合 FK 后建。
+
+阶段 5 实施补充：会话列表以不可变 created_at/id 倒序分页，消息列表以 created_at/id 倒序分页，UI 按 sequence_no 展示；保留 user/updated 索引。消息 role/status/request-role CHECK 与会话 active_message、回复消息的同会话复合 FK 已落地。Chunk 增加 `(id, document_id, index_version_id)` UNIQUE，引用使用复合 FK，不能把一个片段挂到另一文档/版本。引用快照不存正文；过期引用返回 available=false 且不返回旧文件名/定位。

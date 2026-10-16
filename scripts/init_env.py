@@ -10,7 +10,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", default=".env")
     parser.add_argument("--test", action="store_true", help="使用独立测试项目、数据库和 Web 端口")
-    parser.add_argument("--stage", type=int, choices=[2, 3, 4], default=2)
+    parser.add_argument("--stage", type=int, choices=[2, 3, 4, 5], default=2)
     parser.add_argument("--upgrade", action="store_true", help="仅为已有配置补齐缺失的认证配置")
     args = parser.parse_args()
     path = Path(args.output)
@@ -44,6 +44,9 @@ def main() -> None:
     if args.test and args.stage == 4:
         database, project, port = "chat_rag_stage4_test", "chat-rag-stage4-test", 18082
         mysql_port, qdrant_port = 13309, 16335
+    if args.test and args.stage == 5:
+        database, project, port = "chat_rag_stage5_test", "chat-rag-stage5-test", 18083
+        mysql_port, qdrant_port = 13310, 16336
     values = {
         "COMPOSE_PROJECT_NAME": project,
         "WEB_PORT": port,

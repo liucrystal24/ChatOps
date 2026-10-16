@@ -66,7 +66,7 @@ def test_request_ids_http_errors_and_openapi():
         "/api/v1/knowledge-bases",
     } <= set(spec["paths"])
     assert "/api/v1/documents/{document_id}" in spec["paths"]
-    assert not any("conversations" in path for path in spec["paths"])
+    assert "/api/v1/conversations/{conversation_id}/messages:stream" in spec["paths"]
     assert "503" in spec["paths"]["/health/ready"]["get"]["responses"]
 
 

@@ -1,0 +1,26 @@
+{
+  "version": "project-docs-v1",
+  "created_at": "2026-10-15",
+  "sources": [
+    {
+      "file": "architecture.md",
+      "origin": "docs/architecture.md",
+      "sha256": "4d31035010252e3601107dd82d9e678cd8ee8cb8be602fdccdca3559281ae3d1"
+    },
+    {
+      "file": "api.md",
+      "origin": "docs/api-contract.md",
+      "sha256": "57f5a2799e4fe5affed7a1c6ec3079f80532553dd70e4ddf0ba4ae61fe0bf866"
+    },
+    {
+      "file": "stage4.md",
+      "origin": "docs/stage-4-delivery.md",
+      "sha256": "be9300eed425c9cde55a533f8a50012c1b7a1f522c563b6743a484a5a5e1157e"
+    }
+  ],
+  "annotations": "Agent 起草、模型运行前冻结；未经用户人工复核，不称为人工质量验收。",
+  "splits": {
+    "dev": 20,
+    "holdout": 10
+  }
+}

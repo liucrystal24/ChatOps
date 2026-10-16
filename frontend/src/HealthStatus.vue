@@ -77,10 +77,10 @@ onUnmounted(() => {
       </section>
 
       <section class="capability-panel">
-        <div><div class="eyebrow">NEXT CAPABILITY</div><h2>从文档到可追溯的回答</h2><p>已提供文档上传、索引与来源读取；流式问答将在下一阶段开放。</p></div>
-        <ElTag type="info" effect="plain">问答尚未接入</ElTag>
+        <div><div class="eyebrow">RAG CAPABILITY</div><h2>从文档到可追溯的回答</h2><p>已提供文档索引、多轮流式问答与可核验引用。</p></div>
+        <ElTag :type="snapshot?.report?.capabilities.rag_available ? 'success' : 'info'" effect="plain">{{ snapshot?.report?.capabilities.rag_available ? '问答配置就绪' : '问答配置未就绪' }}</ElTag>
       </section>
-      <ElAlert title="基础健康与模型能力分别检查" description="文档索引需要配置真实 Embedding Key。本页不调用模型，基础服务就绪不代表模型远端可用。" type="info" :closable="false" show-icon />
+      <ElAlert title="基础健康与模型能力分别检查" description="索引与问答共用 SiliconFlow Key。能力状态依据配置和基础依赖；本页不调用远端模型，无法代表供应商实时可用。" type="info" :closable="false" show-icon />
       <footer>每 10 秒自动检查 · 健康检查不调用模型</footer>
     </main>
   </div>

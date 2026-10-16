@@ -17,11 +17,14 @@ from app.infrastructure.database import create_engine
 from app.infrastructure.models import (
     AuthorizationGuard,
     Chunk,
+    Citation,
+    Conversation,
     Document,
     IndexVersion,
     Job,
     KnowledgeBase,
     Membership,
+    Message,
     User,
 )
 from app.infrastructure.repositories import Database
@@ -103,6 +106,27 @@ async def bundle(prepared_settings):
                     .all()
                 )
                 if kbs:
+                    conversations = select(Conversation.id).where(Conversation.kb_id.in_(kbs))
+                    messages = select(Message.id).where(Message.conversation_id.in_(conversations))
+                    await connection.execute(
+                        delete(Citation).where(Citation.message_id.in_(messages))
+                    )
+                    await connection.execute(
+                        update(Conversation)
+                        .where(Conversation.kb_id.in_(kbs))
+                        .values(active_message_id=None)
+                    )
+                    await connection.execute(
+                        delete(Message).where(
+                            Message.conversation_id.in_(conversations), Message.role == "assistant"
+                        )
+                    )
+                    await connection.execute(
+                        delete(Message).where(Message.conversation_id.in_(conversations))
+                    )
+                    await connection.execute(
+                        delete(Conversation).where(Conversation.kb_id.in_(kbs))
+                    )
                     keys = (
                         await connection.scalars(
                             select(Document.storage_key).where(Document.kb_id.in_(kbs))

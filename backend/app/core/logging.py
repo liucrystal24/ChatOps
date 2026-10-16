@@ -45,7 +45,12 @@ class RequestContextMiddleware:
                 status = message["status"]
                 MutableHeaders(scope=message)["X-Request-ID"] = request_id
                 if scope["path"].startswith("/api/v1/"):
-                    MutableHeaders(scope=message)["Cache-Control"] = "no-store"
+                    MutableHeaders(scope=message)["Cache-Control"] = (
+                        "no-store, no-transform"
+                        if "text/event-stream"
+                        in MutableHeaders(scope=message).get("content-type", "")
+                        else "no-store"
+                    )
             await send(message)
 
         try:

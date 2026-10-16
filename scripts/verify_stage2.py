@@ -49,7 +49,7 @@ def main(stage=2, services_only=False) -> None:
             "AUTH_SECRET",
         )
     ]
-    if stage == 4:
+    if stage >= 4:
         key = os.environ.get("SILICONFLOW_API_KEY", "")
         if not key:
             for line in (ROOT / ".env").read_text().splitlines():
@@ -119,9 +119,9 @@ def main(stage=2, services_only=False) -> None:
     else:
         step("1/7 检查 Compose、构建运行镜像与测试镜像")
         run(["config", "--quiet"])
-        run(["stop", "worker"]) if stage == 4 else None
+        run(["stop", "worker"]) if stage >= 4 else None
         run(
-            ["build", "api", "migrate", "web", "test", *(["worker"] if stage == 4 else [])],
+            ["build", "api", "migrate", "web", "test", *(["worker"] if stage >= 4 else [])],
             timeout=1200,
         )
         step("2/7 启动真实 MySQL/Qdrant，执行单元及服务集成测试")
@@ -140,7 +140,7 @@ def main(stage=2, services_only=False) -> None:
             ]
         )
         print(output.strip(), flush=True)
-        if stage == 4:
+        if stage >= 4:
             live = run(
                 [
                     "run",
@@ -177,14 +177,18 @@ def main(stage=2, services_only=False) -> None:
         )
     )
     assert actual_spec == json.loads((ROOT / "docs/openapi.json").read_text())
-    if stage in (3, 4):
+    if stage >= 3:
         from stage3_network import verify
 
         verify(run, base, secrets)
-    if stage == 4:
+    if stage >= 4:
         from stage4_network import verify as verify_documents
 
         verify_documents(run, base, secrets)
+    if stage >= 5:
+        from stage5_network import verify as verify_chat
+
+        verify_chat(run, base, secrets)
 
     token = uuid4().hex
     collection = f"test_stage2_persistence_{token}"
@@ -286,7 +290,7 @@ asyncio.run(main())
             "web",
             "mysql",
             "qdrant",
-            *(["worker"] if stage == 4 else []),
+            *(["worker"] if stage >= 4 else []),
         ]
     )
     assert not any(secret in logs for secret in secrets), "日志中检测到密钥"

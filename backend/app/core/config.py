@@ -22,6 +22,12 @@ class Settings(BaseSettings):
     embedding_model: Literal["BAAI/bge-m3"] = "BAAI/bge-m3"
     embedding_timeout_seconds: float = Field(default=30, ge=1, le=60)
     embedding_batch_size: int = Field(default=8, ge=1, le=32)
+    chat_model: Literal["Qwen/Qwen3-8B"] = "Qwen/Qwen3-8B"
+    chat_tokenizer_path: Path = Path(__file__).resolve().parents[2] / "assets/qwen3-tokenizer.json"
+    chat_context_tokens: int = Field(default=16384, ge=4096, le=16384)
+    chat_output_tokens: int = Field(default=1024, ge=128, le=2048)
+    chat_deadline_seconds: int = Field(default=120, ge=10, le=120)
+    chat_read_timeout_seconds: float = Field(default=30, ge=1, le=60)
     files_dir: Path = Path(".local-files")
     tokenizer_path: Path = Path(__file__).resolve().parents[2] / "assets/bge-m3-tokenizer.json"
     upload_max_bytes: int = Field(default=10 * 1024**2, ge=1, le=10 * 1024**2)
