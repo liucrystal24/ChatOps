@@ -49,7 +49,11 @@ async def test_live_stream_followup_citations_and_abstention(bundle):
             kb_id,
             UploadFile(
                 BytesIO(
-                    "松柏项目新员工培训安排在每周二上午十点。培训地点为三楼青松会议室。资料未记载培训费用。".encode()
+                    (
+                        "松柏项目新员工培训安排在每周二上午十点。培训地点为三楼青松会议室。资料未记载培训费用。"
+                        "\n\n松柏项目索引任务总超时为15分钟；Worker租约默认90秒，每20秒续租。"
+                        "\n\n资料更新日期为2026年4月2日。"
+                    ).encode()
                 ),
                 filename="培训说明.txt",
             ),
@@ -60,7 +64,13 @@ async def test_live_stream_followup_citations_and_abstention(bundle):
         assert document.availability == "searchable"
         conv = await chat.create(actor, ConversationCreate(kb_id=kb_id))
         answers = []
-        for question in ("松柏项目新人什么时候培训？", "那地点在哪里？", "培训费每人多少元？"):
+        for question in (
+            "松柏项目新人什么时候培训？",
+            "那地点在哪里？",
+            "培训费每人多少元？",
+            "换个话题，松柏项目Worker租约多久、多久续租？",
+            "松柏项目培训合同的签署日期是什么？",
+        ):
             run = await chat.prepare(
                 actor,
                 str(conv.id),
@@ -88,6 +98,10 @@ async def test_live_stream_followup_citations_and_abstention(bundle):
         assert "青松" in answers[1].content and answers[1].citations
         assert answers[1].timings["rewrite_status"] == "completed"
         assert answers[2].answer_type == "abstention" and not answers[2].citations
+        assert "90" in answers[3].content and "20" in answers[3].content
+        assert "15分钟" not in answers[3].content.replace(" ", "")
+        assert answers[3].citations
+        assert answers[4].answer_type == "abstention" and not answers[4].citations
         assert all(answer.usage for answer in answers)
         await documents.delete(actor, str(uploaded.document.id))
         await worker.run_once()
@@ -101,4 +115,38 @@ async def test_live_stream_followup_citations_and_abstention(bundle):
                 await vectors.delete_version(version.collection_name, version.id)
         await embedding.close()
         await vectors.close()
+        await model.close()
+
+
+@pytest.mark.parametrize(
+    "history,question,required,forbidden",
+    [
+        (
+            [
+                {"role": "user", "content": "系统如何压缩图片？"},
+                {"role": "assistant", "content": "图片压缩质量为80 [S1]。"},
+            ],
+            "默认尺寸和质量呢？",
+            ("图片", "压缩", "尺寸", "质量"),
+            ("80", "[S"),
+        ),
+        (
+            [{"role": "user", "content": "新员工培训什么时候开始？"}],
+            "换个话题，合同如何归档？",
+            ("合同", "归档"),
+            ("培训", "[S"),
+        ),
+    ],
+)
+async def test_live_rewrite_preserves_topic_multiple_intents_and_explicit_topic_switch(
+    history, question, required, forbidden
+):
+    from app.core.config import load_settings
+
+    model = ChatModel(load_settings())
+    try:
+        query, _ = await model.rewrite(history, question)
+        assert all(word in query for word in required)
+        assert all(word not in query for word in forbidden)
+    finally:
         await model.close()

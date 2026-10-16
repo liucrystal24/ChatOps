@@ -174,3 +174,8 @@ MVP 使用版本化 JSONL 题集和单次运行的 JSON/Markdown 报告，不新
 阶段 4 实施补充：documents 增加 `file_type`（txt/md/pdf）、`purged_at`，jobs 的 `stage` 初始可为 queued；清理完成不删除文档/任务历史，purged_at 记录文件清理状态。versions 的 `config_snapshot` 保存解析、切分、tokenizer、模型 profile；不保存密钥。父子复合 FK 在迁移中实际落地，两个循环指针使用命名可空复合 FK 后建。
 
 阶段 5 实施补充：会话列表以不可变 created_at/id 倒序分页，消息列表以 created_at/id 倒序分页，UI 按 sequence_no 展示；保留 user/updated 索引。消息 role/status/request-role CHECK 与会话 active_message、回复消息的同会话复合 FK 已落地。Chunk 增加 `(id, document_id, index_version_id)` UNIQUE，引用使用复合 FK，不能把一个片段挂到另一文档/版本。引用快照不存正文；过期引用返回 available=false 且不返回旧文件名/定位。
+
+
+## 阶段 5 召回修正的配置记录
+
+无新增表或迁移。document_index_versions.config_snapshot 的 splitter 记录 recursive-v1 / paragraph-v2；document_representation 记录 body-v1 / heading-body-v2，现默认 body-v1。chunks.metadata 的 document_representation 与生成该版本时的表示一致，text、text_sha256、token_count 仍针对可定位原文。旧快照缺少这些键时按既有正文表示解释，不重写历史记录。新旧有效文档版本可共用同一模型 profile；不得混入不同模型或维度，重建仍受原子发布和引用保留约束。

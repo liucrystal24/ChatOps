@@ -37,7 +37,10 @@ class IndexingService:
     def snapshot(self):
         return {
             "parser": "pypdf-utf8-v1",
-            "splitter": "recursive-cn-v1",
+            "splitter": self.settings.chunk_structure,
+            "document_representation": "heading-body-v2"
+            if self.settings.embedding_title_context
+            else "body-v1",
             "chunk_size": self.settings.chunk_size,
             "chunk_overlap": self.settings.chunk_overlap,
             "tokenizer_revision": TOKENIZER_REVISION,
@@ -154,6 +157,8 @@ class IndexingService:
             str(self.settings.tokenizer_path),
             str(self.settings.chunk_size),
             str(self.settings.chunk_overlap),
+            self.settings.chunk_structure,
+            str(self.settings.embedding_title_context).lower(),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.DEVNULL,
         )
@@ -215,7 +220,11 @@ class IndexingService:
                     index_version_id=lease.version_id,
                     ordinal=ordinal,
                     text_sha256=hashlib.sha256(part["text"].encode()).hexdigest(),
-                    metadata_json={},
+                    metadata_json={
+                        "document_representation": "heading-body-v2"
+                        if self.settings.embedding_title_context
+                        else "body-v1"
+                    },
                     **part,
                 )
             )
@@ -227,7 +236,18 @@ class IndexingService:
         for start in range(0, len(chunks), size):
             await self.progress(lease, "embed", start, len(chunks))
             batch = chunks[start : start + size]
-            vectors = await self.embedding.embed([c.text for c in batch], profile["dimension"])
+            vectors = await self.embedding.embed(
+                [
+                    (
+                        "章节：" + c.section_title + "\n"
+                        if self.settings.embedding_title_context and c.section_title
+                        else ""
+                    )
+                    + c.text
+                    for c in batch
+                ],
+                profile["dimension"],
+            )
             await self.progress(lease, "upsert", start, len(chunks))
             points = [
                 {

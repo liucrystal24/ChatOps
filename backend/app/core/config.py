@@ -38,6 +38,8 @@ class Settings(BaseSettings):
     index_heartbeat_seconds: float = Field(default=20, ge=1, le=60)
     index_deadline_seconds: int = Field(default=900, ge=10, le=1800)
     parser_timeout_seconds: int = Field(default=60, ge=1, le=120)
+    chunk_structure: Literal["recursive-v1", "paragraph-v2"] = "paragraph-v2"
+    embedding_title_context: bool = False
     chunk_size: int = Field(default=800, ge=100, le=2000)
     chunk_overlap: int = Field(default=120, ge=0, le=500)
 

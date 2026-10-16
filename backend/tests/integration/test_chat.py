@@ -100,7 +100,8 @@ async def test_empty_context_abstention_real_persistence_idempotency_and_acl(cha
     run = await start(c, request)
     stream = await events(c.service, run)
     assert [e.event for e in stream] == ["start", "sources", "delta", "done"]
-    assert c.model.calls == 0 and stream[-1].data["answer_type"] == "abstention"
+    assert c.model.calls == 0
+    assert stream[-1].data["answer_type"] == "abstention"
     result = await c.service.message(c.actor, run.message_id)
     assert result.content == ABSTENTION and result.status == "completed"
     with pytest.raises(AppError) as error:

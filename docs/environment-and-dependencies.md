@@ -127,3 +127,6 @@ TypeScript 7 的发布不自动证明 Vue 类型检查工具已经兼容。若�
 - 配置：CHAT_MODEL 固定；CHAT_CONTEXT_TOKENS 默认/最大 16384、CHAT_OUTPUT_TOKENS 默认1024（128–2048）、CHAT_DEADLINE_SECONDS 默认/最大120、CHAT_READ_TIMEOUT_SECONDS 默认30（1–60），CHAT_TOKENIZER_PATH 默认镜像 assets。Compose 转发常用 model/deadline/output，其他显式配置须同步 Compose。流中每秒授权/来源复核及草稿保存不延长总 deadline。
 
 追问改写另核对 [SiliconFlow JSON mode](https://api-docs.siliconflow.cn/docs/userguide/guides/json-mode)：当前文档称线上语言模型均支持 response_format=json_object。实际 Qwen3-8B JSON 流和两轮改写已通过；仍验证 question 字段/问号/禁止历史引用，格式错误显式回退，不把 JSON 合法性当成语义正确。
+
+
+阶段 5 召回修正（2026-10-15）：未新增依赖，锁文件不变。CHUNK_STRUCTURE 默认 paragraph-v2（可选 recursive-v1）、CHUNK_SIZE 默认800、CHUNK_OVERLAP 默认120；EMBEDDING_TITLE_CONTEXT 默认false。API/Worker 通过相同 Compose 环境获得配置，重建版本保存实际快照。旧有效版本不自动重建；切分配置与文档表示不是模型权重或维度迁移。

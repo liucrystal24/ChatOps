@@ -2,7 +2,7 @@
 
 面向本地部署和技术展示的模块化单体，按阶段实现权限隔离、文档索引、可追溯问答与可复现评测。
 
-**阶段 5：真实多轮流式问答已实现，质量验收进行中。** 已接入文档索引、云端 `BAAI/bge-m3` + `Qwen/Qwen3-8B`、会话历史、SSE、权限复核和来源引用。固定题集的证据召回尚未达到预设门槛，人工质量复核待完成，暂不标记 MVP 全部验收通过。实际检查与限制见[阶段 5 交付记录](docs/stage-5-delivery.md)。
+**阶段 5：真实多轮流式问答已实现，质量验收进行中。** 已接入文档索引、云端 `BAAI/bge-m3` + `Qwen/Qwen3-8B`、会话历史、SSE、权限复核和来源引用。阶段5召回修正后，原22题指定证据召回为22/22；仍有日期/权限/容量等生成误答，人工质量复核待完成，暂不标记 MVP 全部验收通过。实际检查与限制见[阶段 5 交付记录](docs/stage-5-delivery.md)。
 
 ## 启动与升级
 
@@ -43,7 +43,7 @@ docker compose down
 docker compose up -d --wait --wait-timeout 180
 ```
 
-以上分别为手动迁移、停止并保留卷、再次启动。MySQL、Qdrant、原文件各有命名卷；不要使用 `down -v` 删除数据。卷持久化已经验证，备份与恢复操作留到阶段 5。
+以上分别为手动迁移、停止并保留卷、再次启动。MySQL、Qdrant、原文件各有命名卷；不要使用 `down -v` 删除数据。卷持久化及阶段 5 冷备份/恢复已验证，具体步骤见 [备份与恢复](docs/backup-and-restore.md)。
 
 ## 登录与权限
 
@@ -67,7 +67,7 @@ JWT 默认 30 分钟，仅存浏览器内存，刷新需重新登录；无 refre
 
 进入知识库，选择 TXT、MD 或文字 PDF，可附最多 10 个标签。单文件 10 MiB，每库最多 200 份未删除文档/500 MiB，文件卷默认上限 2 GiB；PDF 最多 100 页、提取正文最多 200 万字符、索引最多 5000 个片段。超过限制明确失败，不静默截断。扫描 PDF 不做 OCR。
 
-上传成功只代表文件和排队任务已持久化。页面每 2 秒轮询所见活动任务，终态停止；“可检索”和“最新任务状态”分别展示。默认解析 800 字符、目标重叠 120 字符，真实 BGE tokenizer 另算 token，不把字数等同 token。
+上传成功只代表文件和排队任务已持久化。页面每 2 秒轮询所见活动任务，终态停止；“可检索”和“最新任务状态”分别展示。默认按段落/列表项分开主题，再对长段落按 800 字符、目标重叠 120 字符递归切分；真实 BGE tokenizer 另算 token，不把字数等同 token。已有文档需在页面手动重建索引才采用新切分，失败保留旧有效版本。
 
 - “查看来源”读取当前有效版本正文、PDF 页码或字符位置；“下载原文件”也重新鉴权。
 - “重建索引”处理原文件，新版本完整发布前保留旧版本；失败可继续检索旧版。
@@ -135,6 +135,8 @@ docker compose --env-file .env.stage5-test -p chat-rag-stage5-test down
 | MYSQL_DATABASE / MYSQL_USER / MYSQL_PASSWORD / MYSQL_ROOT_PASSWORD | MySQL 初始化；业务使用独立账号 |
 | DATABASE_URL | 本机 mysql+asyncmy 连接串，charset=utf8mb4 |
 | QDRANT_URL / QDRANT_API_KEY | 向量库地址及至少 32 字符的密钥 |
+| CHUNK_STRUCTURE / CHUNK_SIZE / CHUNK_OVERLAP | 默认 paragraph-v2 / 800 / 120；recursive-v1 用于旧切分对照 |
+| EMBEDDING_TITLE_CONTEXT | 默认 false；可选标题前缀只参与向量输入，不改原文引用 |
 | AUTH_SECRET / AUTH_TOKEN_TTL_SECONDS | 至少 32 字符的签名密钥；默认 1800 秒 |
 | SILICONFLOW_API_KEY | BAAI/bge-m3 和 Qwen3-8B 共用云端凭据，只在服务端 |
 | EMBEDDING_BATCH_SIZE / EMBEDDING_TIMEOUT_SECONDS | 每批默认 8 条（1–32），单次默认 30 秒（1–60） |
@@ -159,12 +161,12 @@ docker compose --env-file .env.stage5-test -p chat-rag-stage5-test down
 - [阶段 2 交付记录](docs/stage-2-delivery.md)
 - [阶段 3 交付记录](docs/stage-3-delivery.md)
 - [阶段 4 交付记录](docs/stage-4-delivery.md)
-- [阶段 5 交付记录](docs/stage-5-delivery.md)
+- [阶段 5 交付记录](docs/stage-5-delivery.md) / [召回改进记录](docs/stage-5-improvement-delivery.md)
 - [备份与恢复](docs/backup-and-restore.md)
 - [公开评测与人工复核](evaluation/README.md)
 - [协作规则](AGENTS.md)
 
-阶段 5 需要另行授权并选择真实聊天 LLM，随后实现多轮会话、流式回答、引用核验、拒答与评测。阶段 4 的检索通过不等于已经完成问答质量评测。
+阶段 5 已获授权并实现真实流式问答；当前继续修正召回与验证事实支持。工程功能可运行不等于人工质量验收完成。
 
 
 ## 问答演示

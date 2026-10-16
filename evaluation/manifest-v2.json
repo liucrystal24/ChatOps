@@ -1,0 +1,8 @@
+{
+  "cases_sha256": "05e112c7ac585f36f64302e7e582178fd70410a9fd50b3914470fe0bc4cea414",
+  "corpus_manifest": "manifest-v1.json",
+  "status": "agent-reviewed-human-pending",
+  "old_holdout": "regression",
+  "new_holdout": "b01-b10",
+  "human_annotation_reviewed": false
+}

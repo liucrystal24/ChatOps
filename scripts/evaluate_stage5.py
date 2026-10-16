@@ -50,25 +50,17 @@ async def cleanup(database, settings, user_id, kb_id):
         await repo.lock_authorization()
         convs = select(Conversation.id).where(Conversation.user_id == user_id)
         msgs = select(Message.id).where(Message.conversation_id.in_(convs))
-        await repo.session.execute(
-            delete(Citation).where(Citation.message_id.in_(msgs))
-        )
+        await repo.session.execute(delete(Citation).where(Citation.message_id.in_(msgs)))
         await repo.session.execute(
             update(Conversation)
             .where(Conversation.user_id == user_id)
             .values(active_message_id=None)
         )
         await repo.session.execute(
-            delete(Message).where(
-                Message.conversation_id.in_(convs), Message.role == "assistant"
-            )
+            delete(Message).where(Message.conversation_id.in_(convs), Message.role == "assistant")
         )
-        await repo.session.execute(
-            delete(Message).where(Message.conversation_id.in_(convs))
-        )
-        await repo.session.execute(
-            delete(Conversation).where(Conversation.user_id == user_id)
-        )
+        await repo.session.execute(delete(Message).where(Message.conversation_id.in_(convs)))
+        await repo.session.execute(delete(Conversation).where(Conversation.user_id == user_id))
         if kb_id:
             keys = (
                 await repo.session.scalars(
@@ -81,17 +73,13 @@ async def cleanup(database, settings, user_id, kb_id):
                 .values(active_index_version_id=None, current_job_id=None)
             )
             await repo.session.execute(delete(Chunk).where(Chunk.kb_id == kb_id))
-            await repo.session.execute(
-                delete(IndexVersion).where(IndexVersion.kb_id == kb_id)
-            )
+            await repo.session.execute(delete(IndexVersion).where(IndexVersion.kb_id == kb_id))
             await repo.session.execute(
                 update(Job).where(Job.kb_id == kb_id).values(retry_of_job_id=None)
             )
             await repo.session.execute(delete(Job).where(Job.kb_id == kb_id))
             await repo.session.execute(delete(Document).where(Document.kb_id == kb_id))
-            await repo.session.execute(
-                delete(Membership).where(Membership.kb_id == kb_id)
-            )
+            await repo.session.execute(delete(Membership).where(Membership.kb_id == kb_id))
             await repo.session.execute(
                 delete(KnowledgeBase).where(
                     KnowledgeBase.id == kb_id, KnowledgeBase.created_by == user_id
@@ -103,6 +91,8 @@ async def cleanup(database, settings, user_id, kb_id):
 
 
 def summarize(rows):
+    if rows and all(r.get("status") == "retrieval_only" for r in rows):
+        return {"n": len(rows), "mode": "retrieval_only", "generation_executed": False}
     answered = [r for r in rows if r["answerable"]]
     unsupported = [r for r in rows if not r["answerable"]]
     abstained = [r for r in rows if r.get("answer_type") == "abstention"]
@@ -115,12 +105,8 @@ def summarize(rows):
         return round(values[min(len(values) - 1, int((len(values) - 1) * p))], 2)
 
     latency = {}
-    for field in ("retrieval_ms", "rewrite_ms", "first_token_ms", "total_ms"):
-        values = [
-            r["timings"][field]
-            for r in rows
-            if r.get("timings", {}).get(field) is not None
-        ]
+    for field in ("retrieval_ms", "rewrite_ms", "evidence_check_ms", "first_token_ms", "total_ms"):
+        values = [r["timings"][field] for r in rows if r.get("timings", {}).get(field) is not None]
         latency[field] = {
             "p50": quantile(values, 0.5),
             "p95": quantile(values, 0.95),
@@ -148,14 +134,10 @@ def summarize(rows):
             "true": rejected,
             "unanswerable": len(unsupported),
             "recall": rejected / len(unsupported) if unsupported else None,
-            "false_abstentions": sum(
-                r.get("answer_type") == "abstention" for r in answered
-            ),
+            "false_abstentions": sum(r.get("answer_type") == "abstention" for r in answered),
             "precision": rejected / len(abstained) if abstained else None,
         },
-        reference_fact_presence_proxy=sum(
-            r.get("reference_fact_presence", False) for r in answered
-        )
+        reference_fact_presence_proxy=sum(r.get("reference_fact_presence", False) for r in answered)
         / len(answered)
         if answered
         else None,
@@ -163,9 +145,7 @@ def summarize(rows):
         human_fact_support=None,
         latency=latency,
         answer_usage={
-            "prompt_tokens": sum(
-                (r.get("usage") or {}).get("prompt_tokens", 0) for r in rows
-            ),
+            "prompt_tokens": sum((r.get("usage") or {}).get("prompt_tokens", 0) for r in rows),
             "completion_tokens": sum(
                 (r.get("usage") or {}).get("completion_tokens", 0) for r in rows
             ),
@@ -207,10 +187,17 @@ async def run(args):
     cases_path = args.cases.resolve()
     from stage5_metrics import score_case, summarize_evidence, validate_cases
 
-    v2_cases = [json.loads(line) for line in (ROOT / "evaluation/cases-v2.jsonl").read_text().splitlines()]
+    v2_cases = [
+        json.loads(line) for line in (ROOT / "evaluation/cases-v2.jsonl").read_text().splitlines()
+    ]
     v2_by_id = {c["case_id"]: c for c in v2_cases}
     corpus_text = {p.name: p.read_text() for p in (ROOT / "evaluation/corpus/v1").glob("*.md")}
     validate_cases(v2_cases, corpus_text)
+    frozen = json.loads((ROOT / "evaluation/manifest-v2.json").read_text())
+    assert (
+        frozen["cases_sha256"]
+        == hashlib.sha256((ROOT / "evaluation/cases-v2.jsonl").read_bytes()).hexdigest()
+    )
     cases = [json.loads(line) for line in cases_path.read_text().splitlines()]
     if args.split != "all":
         cases = [c for c in cases if c["split"] == args.split]
@@ -234,13 +221,17 @@ async def run(args):
         cursors,
         settings,
     )
-    calls = {"http_attempts": 0, "returned_usage": []}
+    calls = {"http_attempts": 0, "embedding_http_attempts": 0, "returned_usage": []}
 
     async def record_request(request):
         if request.url.path.endswith("/chat/completions"):
             calls["http_attempts"] += 1
 
+    async def record_embedding(request):
+        calls["embedding_http_attempts"] += 1
+
     model.client.event_hooks["request"] = [record_request]
+    embedding.client.event_hooks["request"] = [record_embedding]
     original_stream = model.stream
 
     async def tracked_stream(*values, **options):
@@ -271,9 +262,7 @@ async def run(args):
                 "langchain-text-splitters",
             )
         },
-        "backend_lock_sha256": hashlib.sha256(
-            (ROOT / "backend/uv.lock").read_bytes()
-        ).hexdigest(),
+        "backend_lock_sha256": hashlib.sha256((ROOT / "backend/uv.lock").read_bytes()).hexdigest(),
         "prompt_module_sha256": hashlib.sha256(
             (ROOT / "backend/app/modules/chat/prompt.py").read_bytes()
         ).hexdigest(),
@@ -297,43 +286,59 @@ async def run(args):
         "embedding_model": settings.embedding_model,
         "prompt_sha256": hashlib.sha256(SYSTEM.encode()).hexdigest(),
         "cases_sha256": hashlib.sha256(cases_path.read_bytes()).hexdigest(),
-        "evidence_v2_sha256": hashlib.sha256((ROOT / "evaluation/cases-v2.jsonl").read_bytes()).hexdigest(),
+        "evidence_v2_sha256": hashlib.sha256(
+            (ROOT / "evaluation/cases-v2.jsonl").read_bytes()
+        ).hexdigest(),
         "retrieval_only": args.retrieval_only,
         "index_config": worker.snapshot(),
-        "source_hashes": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in [ROOT / "scripts/stage5_metrics.py", ROOT / "scripts/evaluate_stage5.py", ROOT / "backend/app/modules/retrieval/service.py", ROOT / "backend/app/modules/indexing/parser.py", ROOT / "backend/app/modules/indexing/service.py"]},
+        "source_hashes": {
+            str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in [
+                ROOT / "scripts/stage5_metrics.py",
+                ROOT / "scripts/evaluate_stage5.py",
+                ROOT / "backend/app/modules/retrieval/service.py",
+                ROOT / "backend/app/modules/indexing/parser.py",
+                ROOT / "backend/app/modules/indexing/service.py",
+            ]
+        },
         "corpus": json.loads((ROOT / "evaluation/manifest-v1.json").read_text()),
         "top_k": 5,
         "chunk_size": settings.chunk_size,
         "chunk_overlap": settings.chunk_overlap,
-        "review_method": "自动证据定位和关键事实包含率；人工正确率/支持率尚未评审，不以代理分数冒充人工验收。",
+        "annotation_status": "agent-reviewed-human-pending",
+        "review_method": (
+            "自动证据定位和关键事实包含率；人工正确率/支持率尚未评审，不以代理分数冒充人工验收。"
+        ),
         "rows": [],
     }
     output = (
-        ROOT
-        / "evaluation/outputs"
-        / f"{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}-{args.split}"
+        ROOT / "evaluation/outputs" / f"{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}-{args.split}"
     )
     output.mkdir(parents=True, exist_ok=False)
 
     def save():
         report["model_calls"] = {
             "http_attempts": calls["http_attempts"],
+            "embedding_http_attempts": calls["embedding_http_attempts"],
             "requests_with_usage": len(calls["returned_usage"]),
             "prompt_tokens": sum(u["prompt_tokens"] for u in calls["returned_usage"]),
-            "completion_tokens": sum(
-                u["completion_tokens"] for u in calls["returned_usage"]
-            ),
+            "completion_tokens": sum(u["completion_tokens"] for u in calls["returned_usage"]),
         }
         report["summary"] = summarize(report["rows"])
         report["evidence_v2_summary"] = summarize_evidence(report["rows"])
+        report["evidence_v2_by_split"] = {
+            split: summarize_evidence([r for r in report["rows"] if r["split"] == split])
+            for split in {r["split"] for r in report["rows"]}
+        }
+        report["legacy_v1_summary"] = summarize(
+            [r for r in report["rows"] if r["case_id"].startswith(("s", "f", "u"))]
+        )
         report["holdout_summary"] = (
             summarize([r for r in report["rows"] if r["split"] == "holdout"])
             if any(r["split"] == "holdout" for r in report["rows"])
             else None
         )
-        (output / "report.json").write_text(
-            json.dumps(report, ensure_ascii=False, indent=2) + "\n"
-        )
+        (output / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
         (output / "review.jsonl").write_text(
             "".join(
                 json.dumps(
@@ -343,6 +348,7 @@ async def run(args):
                         "supported": None,
                         "reviewer": None,
                         "notes": "",
+                        "fact_reviews": [],
                     },
                     ensure_ascii=False,
                 )
@@ -354,9 +360,7 @@ async def run(args):
     try:
         user = await identity.create_user("eval_" + uuid4().hex, "eval-" + uuid4().hex)
         user_id = str(user.id)
-        kb = await knowledge.create(
-            user_id, KnowledgeBaseCreate(name="项目公开文档评测 v1")
-        )
+        kb = await knowledge.create(user_id, KnowledgeBaseCreate(name="项目公开文档评测 v1"))
         kb_id = str(kb.id)
         mappings = {}
         for source in report["corpus"]["sources"]:
@@ -380,25 +384,53 @@ async def run(args):
             )
             assert document.availability == "searchable", "公开评测语料索引失败"
             mappings[source["file"]] = str(document.id)
+        report["document_mappings"] = mappings
         async with database.transaction() as repo:
             kb = await repo.knowledge_base(kb_id)
             profile = kb.embedding_profile
             report["embedding_profile"] = profile
-            report["index_versions"] = [
-                v.id for _, v in await repo.active_versions(kb_id)
+            report["index_versions"] = [v.id for _, v in await repo.active_versions(kb_id)]
+            report["index_inventory"] = [
+                dict(
+                    document_id=d.id,
+                    index_version_id=v.id,
+                    chunk_count=v.chunk_count,
+                    config=v.config_snapshot,
+                )
+                for d, v in await repo.active_versions(kb_id)
             ]
         print("公开语料真实索引完成；开始固定题集", flush=True)
         for case in cases:
             if args.retrieval_only:
                 from app.modules.retrieval.schemas import RetrievalInput
+
                 query = case["question"]
                 rewrite_usage = None
                 if case.get("history_question"):
-                    query, rewrite_usage = await model.rewrite([{ "role": "user", "content": case["history_question"]}], query)
-                candidates = await chat.retrieval.search(user_id, kb_id, RetrievalInput(question=query, top_k=20))
-                row = dict(case_id=case["case_id"], split=case["split"], question=case["question"], answerable=case["answerable"], status="retrieval_only", answer_type=None, citations=[], retrieval_query=query, sources=candidates[:5], candidates=candidates, rewrite_usage=rewrite_usage)
+                    query, rewrite_usage = await model.rewrite(
+                        [{"role": "user", "content": case["history_question"]}], query
+                    )
+                candidates = await chat.retrieval.search(
+                    user_id, kb_id, RetrievalInput(question=query, top_k=20)
+                )
+                row = dict(
+                    case_id=case["case_id"],
+                    split=case["split"],
+                    question=case["question"],
+                    answerable=case["answerable"],
+                    status="retrieval_only",
+                    answer_type=None,
+                    citations=[],
+                    retrieval_query=query,
+                    sources=candidates[:5],
+                    candidates=candidates,
+                    rewrite_usage=rewrite_usage,
+                )
                 row["evidence_v2"] = score_case(v2_by_id[case["case_id"]], candidates[:5], mappings)
-                row["candidate_evidence"] = {str(k): score_case(v2_by_id[case["case_id"]], candidates[:k], mappings) for k in (5,10,20)}
+                row["candidate_evidence"] = {
+                    str(k): score_case(v2_by_id[case["case_id"]], candidates[:k], mappings)
+                    for k in (5, 10, 20)
+                }
                 report["rows"].append(row)
                 save()
                 print(case["case_id"], row["evidence_v2"], flush=True)
@@ -407,9 +439,7 @@ async def run(args):
                 user_id, ConversationCreate(kb_id=kb_id, title=case["case_id"])
             )
 
-            async def ask(
-                question, conversation_id=str(conversation.id), case_id=case["case_id"]
-            ):
+            async def ask(question, conversation_id=str(conversation.id), case_id=case["case_id"]):
                 generation = await chat.prepare(
                     user_id,
                     conversation_id,
@@ -440,9 +470,15 @@ async def run(args):
             row["evidence_v2"] = score_case(v2_by_id[case["case_id"]], generation.sources, mappings)
             if args.diagnose and case["answerable"]:
                 from app.modules.retrieval.schemas import RetrievalInput
-                candidates = await chat.retrieval.search(user_id, kb_id, RetrievalInput(question=generation.query, top_k=20))
+
+                candidates = await chat.retrieval.search(
+                    user_id, kb_id, RetrievalInput(question=generation.query, top_k=20)
+                )
                 row["candidates"] = candidates
-                row["candidate_evidence"] = {str(k): score_case(v2_by_id[case["case_id"]], candidates[:k], mappings) for k in (5,10,20)}
+                row["candidate_evidence"] = {
+                    str(k): score_case(v2_by_id[case["case_id"]], candidates[:k], mappings)
+                    for k in (5, 10, 20)
+                }
             if case["answerable"] and "evidence" in case:
                 # 每题一个预先标注的证据单元；允许切分边界，标注片段至少 90% 在单块中出现。
                 evidence = case["evidence"]
@@ -458,10 +494,7 @@ async def run(args):
 
                 row["evidence_hit"] = any(hit(s) for s in generation.sources)
                 row["reference_fact_presence"] = stored.answer_type == "answer" and all(
-                    any(
-                        value.lower() in stored.content.lower()
-                        for value in fact.split("|")
-                    )
+                    any(value.lower() in stored.content.lower() for value in fact.split("|"))
                     for fact in case["acceptable_facts"]
                 )
             report["rows"].append(row)
@@ -476,11 +509,16 @@ async def run(args):
         (output / "report.md").write_text(
             "# 阶段 5 真实 Dense 基线\n\n"
             + json.dumps(summary, ensure_ascii=False, indent=2)
-            + "\n\n人工正确率与支持率尚未复核。逐题答案和候选见 report.json，人工复核表见 review.jsonl。\n"
+            + "\n\n人工正确率与支持率尚未复核。逐题答案和候选见 report.json，"
+            "人工复核表见 review.jsonl。\n"
         )
         print(
             json.dumps(
-                {"report": str(output / "report.json"), "summary": summary},
+                {
+                    "report": str(output / "report.json"),
+                    "summary": summary,
+                    "evidence_v2_summary": report["evidence_v2_summary"],
+                },
                 ensure_ascii=False,
             ),
             flush=True,
@@ -517,7 +555,12 @@ def main():
         values["SILICONFLOW_API_KEY"] = load_environment(args.key_env_file).get(
             "SILICONFLOW_API_KEY", ""
         )
-    for name in ("CHUNK_SIZE", "CHUNK_OVERLAP", "CHUNK_STRUCTURE"):
+    for name in (
+        "CHUNK_SIZE",
+        "CHUNK_OVERLAP",
+        "CHUNK_STRUCTURE",
+        "EMBEDDING_TITLE_CONTEXT",
+    ):
         if name in os.environ:
             values[name] = os.environ[name]
     os.environ.update(values)

@@ -1,0 +1,1024 @@
+{
+  "status": "automated-evaluation-complete-human-review-pending",
+  "phase6_started": false,
+  "annotation_manifest": {
+    "cases_sha256": "05e112c7ac585f36f64302e7e582178fd70410a9fd50b3914470fe0bc4cea414",
+    "corpus_manifest": "manifest-v1.json",
+    "status": "agent-reviewed-human-pending",
+    "old_holdout": "regression",
+    "new_holdout": "b01-b10",
+    "human_annotation_reviewed": false
+  },
+  "original_v1_baseline": {
+    "n": 30,
+    "completed": 30,
+    "failures": 0,
+    "evidence_recall_at_5": {
+      "hits": 12,
+      "total": 22,
+      "value": 0.5454545454545454
+    },
+    "citations": {
+      "valid": 20,
+      "total": 20,
+      "validity": 1.0
+    },
+    "abstention": {
+      "true": 8,
+      "unanswerable": 8,
+      "recall": 1.0,
+      "false_abstentions": 3,
+      "precision": 0.7272727272727273
+    },
+    "reference_fact_presence_proxy": 0.5454545454545454,
+    "human_correctness": null,
+    "human_fact_support": null,
+    "latency": {
+      "retrieval_ms": {
+        "p50": 185.05,
+        "p95": 327.0,
+        "n": 30
+      },
+      "rewrite_ms": {
+        "p50": 873.63,
+        "p95": 4444.99,
+        "n": 6
+      },
+      "first_token_ms": {
+        "p50": 1133.48,
+        "p95": 3777.93,
+        "n": 30
+      },
+      "total_ms": {
+        "p50": 2511.79,
+        "p95": 10144.0,
+        "n": 30
+      }
+    },
+    "answer_usage": {
+      "prompt_tokens": 62433,
+      "completion_tokens": 761,
+      "requests_with_usage": 30
+    }
+  },
+  "old_baseline_rescored_v2": {
+    "hits": 26,
+    "total": 35,
+    "recall_at_5": 0.7428571428571429,
+    "complete_questions": 16,
+    "answerable_questions": 22,
+    "human_annotation_reviewed": false
+  },
+  "final_report": "evaluation/outputs/20261015T121205Z-all/report.json",
+  "final_sha256": "1689deb20bf08dc81f97dbf03beb6b100e8130a60274cb8225946978f3351a02",
+  "final_legacy_v1": {
+    "n": 30,
+    "completed": 30,
+    "failures": 0,
+    "evidence_recall_at_5": {
+      "hits": 22,
+      "total": 22,
+      "value": 1.0
+    },
+    "citations": {
+      "valid": 28,
+      "total": 28,
+      "validity": 1.0
+    },
+    "abstention": {
+      "true": 7,
+      "unanswerable": 8,
+      "recall": 0.875,
+      "false_abstentions": 0,
+      "precision": 1.0
+    },
+    "reference_fact_presence_proxy": 0.9090909090909091,
+    "human_correctness": null,
+    "human_fact_support": null,
+    "latency": {
+      "retrieval_ms": {
+        "p50": 307.87,
+        "p95": 781.96,
+        "n": 30
+      },
+      "rewrite_ms": {
+        "p50": 1419.25,
+        "p95": 1535.54,
+        "n": 6
+      },
+      "evidence_check_ms": {
+        "p50": null,
+        "p95": null,
+        "n": 0
+      },
+      "first_token_ms": {
+        "p50": 1332.45,
+        "p95": 2965.69,
+        "n": 30
+      },
+      "total_ms": {
+        "p50": 3316.68,
+        "p95": 11821.86,
+        "n": 30
+      }
+    },
+    "answer_usage": {
+      "prompt_tokens": 27340,
+      "completion_tokens": 782,
+      "requests_with_usage": 30
+    }
+  },
+  "final_v2": {
+    "hits": 41,
+    "total": 41,
+    "recall_at_5": 1.0,
+    "complete_questions": 28,
+    "answerable_questions": 28,
+    "human_annotation_reviewed": false
+  },
+  "final_by_split": {
+    "regression": {
+      "hits": 9,
+      "total": 9,
+      "recall_at_5": 1.0,
+      "complete_questions": 7,
+      "answerable_questions": 7,
+      "human_annotation_reviewed": false
+    },
+    "holdout": {
+      "hits": 6,
+      "total": 6,
+      "recall_at_5": 1.0,
+      "complete_questions": 6,
+      "answerable_questions": 6,
+      "human_annotation_reviewed": false
+    },
+    "dev": {
+      "hits": 26,
+      "total": 26,
+      "recall_at_5": 1.0,
+      "complete_questions": 15,
+      "answerable_questions": 15,
+      "human_annotation_reviewed": false
+    }
+  },
+  "final_summary": {
+    "n": 40,
+    "completed": 40,
+    "failures": 0,
+    "evidence_recall_at_5": {
+      "hits": 28,
+      "total": 28,
+      "value": 1.0
+    },
+    "citations": {
+      "valid": 39,
+      "total": 39,
+      "validity": 1.0
+    },
+    "abstention": {
+      "true": 11,
+      "unanswerable": 12,
+      "recall": 0.9166666666666666,
+      "false_abstentions": 0,
+      "precision": 1.0
+    },
+    "reference_fact_presence_proxy": 0.8928571428571429,
+    "human_correctness": null,
+    "human_fact_support": null,
+    "latency": {
+      "retrieval_ms": {
+        "p50": 271.61,
+        "p95": 781.96,
+        "n": 40
+      },
+      "rewrite_ms": {
+        "p50": 1419.25,
+        "p95": 1535.54,
+        "n": 6
+      },
+      "evidence_check_ms": {
+        "p50": null,
+        "p95": null,
+        "n": 0
+      },
+      "first_token_ms": {
+        "p50": 1285.73,
+        "p95": 2965.69,
+        "n": 40
+      },
+      "total_ms": {
+        "p50": 3316.68,
+        "p95": 14995.84,
+        "n": 40
+      }
+    },
+    "answer_usage": {
+      "prompt_tokens": 36591,
+      "completion_tokens": 1209,
+      "requests_with_usage": 40
+    }
+  },
+  "final_model_calls": {
+    "http_attempts": 52,
+    "embedding_http_attempts": 99,
+    "requests_with_usage": 52,
+    "prompt_tokens": 44181,
+    "completion_tokens": 1768
+  },
+  "known_generation_errors": [
+    "u05:将交付记录日期误当商用合同签署日期",
+    "f04:错误声称viewer可以读取owner专属成员列表",
+    "s15:将单库500MiB容量限制混答成200个文档数量配额"
+  ],
+  "experiments": [
+    {
+      "report": "evaluation/outputs/20261015T113856Z-dev/report.json",
+      "sha256": "1915ba313568201b6750dd76327569e5706cacf5cdb51bd957d5d606b476f2a0",
+      "split": "dev",
+      "retrieval_only": true,
+      "index_config": {
+        "parser": "pypdf-utf8-v1",
+        "splitter": "recursive-cn-v1",
+        "chunk_size": 800,
+        "chunk_overlap": 120,
+        "tokenizer_revision": "5617a9f61b028005a4858fdac845db406aefb181"
+      },
+      "adapter_sha256": "f6a96c9b7ad0ee5ce5927781e4de4466bd3bb946ffa7872807da62a30cf284db",
+      "prompt_sha256": "5d02163bdb33c104e719e3d07f750495d775da770b409f091876f96881333131",
+      "summary": {
+        "n": 20,
+        "completed": 0,
+        "failures": 20,
+        "evidence_recall_at_5": {
+          "hits": 0,
+          "total": 15,
+          "value": 0.0
+        },
+        "citations": {
+          "valid": 0,
+          "total": 0,
+          "validity": null
+        },
+        "abstention": {
+          "true": 0,
+          "unanswerable": 5,
+          "recall": 0.0,
+          "false_abstentions": 0,
+          "precision": null
+        },
+        "reference_fact_presence_proxy": 0.0,
+        "human_correctness": null,
+        "human_fact_support": null,
+        "latency": {
+          "retrieval_ms": {
+            "p50": null,
+            "p95": null,
+            "n": 0
+          },
+          "rewrite_ms": {
+            "p50": null,
+            "p95": null,
+            "n": 0
+          },
+          "first_token_ms": {
+            "p50": null,
+            "p95": null,
+            "n": 0
+          },
+          "total_ms": {
+            "p50": null,
+            "p95": null,
+            "n": 0
+          }
+        },
+        "answer_usage": {
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "requests_with_usage": 0
+        }
+      },
+      "evidence_v2": {
+        "hits": 20,
+        "total": 26,
+        "recall_at_5": 0.7692307692307693,
+        "complete_questions": 11,
+        "answerable_questions": 15,
+        "human_annotation_reviewed": false
+      },
+      "model_calls": {
+        "http_attempts": 4,
+        "requests_with_usage": 4,
+        "prompt_tokens": 589,
+        "completion_tokens": 49
+      }
+    },
+    {
+      "report": "evaluation/outputs/20261015T114050Z-dev/report.json",
+      "sha256": "f3e8db0d289250c1333a53698004430c9d2621bd54c612f1111077cb8f6ee4e3",
+      "split": "dev",
+      "retrieval_only": true,
+      "index_config": {
+        "parser": "pypdf-utf8-v1",
+        "splitter": "paragraph-v2",
+        "document_representation": "body-v1",
+        "chunk_size": 800,
+        "chunk_overlap": 120,
+        "tokenizer_revision": "5617a9f61b028005a4858fdac845db406aefb181"
+      },
+      "adapter_sha256": "f6a96c9b7ad0ee5ce5927781e4de4466bd3bb946ffa7872807da62a30cf284db",
+      "prompt_sha256": "5d02163bdb33c104e719e3d07f750495d775da770b409f091876f96881333131",
+      "summary": {
+        "n": 20,
+        "mode": "retrieval_only",
+        "generation_executed": false
+      },
+      "evidence_v2": {
+        "hits": 19,
+        "total": 26,
+        "recall_at_5": 0.7307692307692307,
+        "complete_questions": 10,
+        "answerable_questions": 15,
+        "human_annotation_reviewed": false
+      },
+      "model_calls": {
+        "http_attempts": 4,
+        "requests_with_usage": 4,
+        "prompt_tokens": 589,
+        "completion_tokens": 46
+      }
+    },
+    {
+      "report": "evaluation/outputs/20261015T114154Z-dev/report.json",
+      "sha256": "77b62f9cef784f4a15767d0594cd91588e515cca7d0391230166b4e59120249e",
+      "split": "dev",
+      "retrieval_only": true,
+      "index_config": {
+        "parser": "pypdf-utf8-v1",
+        "splitter": "paragraph-v2",
+        "document_representation": "heading-body-v2",
+        "chunk_size": 800,
+        "chunk_overlap": 120,
+        "tokenizer_revision": "5617a9f61b028005a4858fdac845db406aefb181"
+      },
+      "adapter_sha256": "b64d7b52d3ef2160594790262e60abee2f839341188d4e8ea40a2a5228e613a5",
+      "prompt_sha256": "5d02163bdb33c104e719e3d07f750495d775da770b409f091876f96881333131",
+      "summary": {
+        "n": 20,
+        "mode": "retrieval_only",
+        "generation_executed": false
+      },
+      "evidence_v2": {
+        "hits": 22,
+        "total": 26,
+        "recall_at_5": 0.8461538461538461,
+        "complete_questions": 13,
+        "answerable_questions": 15,
+        "human_annotation_reviewed": false
+      },
+      "model_calls": {
+        "http_attempts": 4,
+        "requests_with_usage": 4,
+        "prompt_tokens": 1041,
+        "completion_tokens": 67
+      }
+    },
+    {
+      "report": "evaluation/outputs/20261015T114314Z-dev/report.json",
+      "sha256": "04a68ca0bcefba4c15c80e4ccc08903fa88dab3306a723bc88dce31b2d507ba0",
+      "split": "dev",
+      "retrieval_only": true,
+      "index_config": {
+        "parser": "pypdf-utf8-v1",
+        "splitter": "paragraph-v2",
+        "document_representation": "heading-body-v2",
+        "chunk_size": 800,
+        "chunk_overlap": 120,
+        "tokenizer_revision": "5617a9f61b028005a4858fdac845db406aefb181"
+      },
+      "adapter_sha256": "b64d7b52d3ef2160594790262e60abee2f839341188d4e8ea40a2a5228e613a5",
+      "prompt_sha256": "5d02163bdb33c104e719e3d07f750495d775da770b409f091876f96881333131",
+      "summary": {
+        "n": 20,
+        "mode": "retrieval_only",
+        "generation_executed": false
+      },
+      "evidence_v2": {
+        "hits": 26,
+        "total": 26,
+        "recall_at_5": 1.0,
+        "complete_questions": 15,
+        "answerable_questions": 15,
+        "human_annotation_reviewed": false
+      },
+      "model_calls": {
+        "http_attempts": 4,
+        "requests_with_usage": 4,
+        "prompt_tokens": 1041,
+        "completion_tokens": 67
+      }
+    },
+    {
+      "report": "evaluation/outputs/20261015T114421Z-dev/report.json",
+      "sha256": "d69bb54c785c0424772e33a1e428dfb1fbb012f394c76e9aa7334708c632538a",
+      "split": "dev",
+      "retrieval_only": true,
+      "index_config": {
+        "parser": "pypdf-utf8-v1",
+        "splitter": "paragraph-v2",
+        "document_representation": "body-v1",
+        "chunk_size": 800,
+        "chunk_overlap": 120,
+        "tokenizer_revision": "5617a9f61b028005a4858fdac845db406aefb181"
+      },
+      "adapter_sha256": "b64d7b52d3ef2160594790262e60abee2f839341188d4e8ea40a2a5228e613a5",
+      "prompt_sha256": "5d02163bdb33c104e719e3d07f750495d775da770b409f091876f96881333131",
+      "summary": {
+        "n": 20,
+        "mode": "retrieval_only",
+        "generation_executed": false
+      },
+      "evidence_v2": {
+        "hits": 26,
+        "total": 26,
+        "recall_at_5": 1.0,
+        "complete_questions": 15,
+        "answerable_questions": 15,
+        "human_annotation_reviewed": false
+      },
+      "model_calls": {
+        "http_attempts": 4,
+        "requests_with_usage": 4,
+        "prompt_tokens": 1041,
+        "completion_tokens": 67
+      }
+    },
+    {
+      "report": "evaluation/outputs/20261015T114549Z-dev/report.json",
+      "sha256": "66caac8496763f6ec21ffee698c1649bbe2eef703ab9b57caad418af15b5f762",
+      "split": "dev",
+      "retrieval_only": true,
+      "index_config": {
+        "parser": "pypdf-utf8-v1",
+        "splitter": "recursive-v1",
+        "document_representation": "body-v1",
+        "chunk_size": 800,
+        "chunk_overlap": 120,
+        "tokenizer_revision": "5617a9f61b028005a4858fdac845db406aefb181"
+      },
+      "adapter_sha256": "d23655d3497fc75e64cc62853261248614baa1b519ffb6933ec013718aa737a7",
+      "prompt_sha256": "5d02163bdb33c104e719e3d07f750495d775da770b409f091876f96881333131",
+      "summary": {
+        "n": 20,
+        "mode": "retrieval_only",
+        "generation_executed": false
+      },
+      "evidence_v2": {
+        "hits": 20,
+        "total": 26,
+        "recall_at_5": 0.7692307692307693,
+        "complete_questions": 11,
+        "answerable_questions": 15,
+        "human_annotation_reviewed": false
+      },
+      "model_calls": {
+        "http_attempts": 4,
+        "requests_with_usage": 4,
+        "prompt_tokens": 1041,
+        "completion_tokens": 67
+      }
+    },
+    {
+      "report": "evaluation/outputs/20261015T114716Z-all/report.json",
+      "sha256": "c065059f4b2b45cb60da2d03f2cde94b6667e31a865a5e21bd3b991d0cc03f83",
+      "split": "all",
+      "retrieval_only": false,
+      "index_config": {
+        "parser": "pypdf-utf8-v1",
+        "splitter": "paragraph-v2",
+        "document_representation": "body-v1",
+        "chunk_size": 800,
+        "chunk_overlap": 120,
+        "tokenizer_revision": "5617a9f61b028005a4858fdac845db406aefb181"
+      },
+      "adapter_sha256": "d23655d3497fc75e64cc62853261248614baa1b519ffb6933ec013718aa737a7",
+      "prompt_sha256": "5d02163bdb33c104e719e3d07f750495d775da770b409f091876f96881333131",
+      "summary": {
+        "n": 40,
+        "completed": 40,
+        "failures": 0,
+        "evidence_recall_at_5": {
+          "hits": 28,
+          "total": 28,
+          "value": 1.0
+        },
+        "citations": {
+          "valid": 36,
+          "total": 36,
+          "validity": 1.0
+        },
+        "abstention": {
+          "true": 11,
+          "unanswerable": 12,
+          "recall": 0.9166666666666666,
+          "false_abstentions": 0,
+          "precision": 1.0
+        },
+        "reference_fact_presence_proxy": 0.8214285714285714,
+        "human_correctness": null,
+        "human_fact_support": null,
+        "latency": {
+          "retrieval_ms": {
+            "p50": 227.13,
+            "p95": 401.36,
+            "n": 40
+          },
+          "rewrite_ms": {
+            "p50": 1142.53,
+            "p95": 1224.76,
+            "n": 6
+          },
+          "first_token_ms": {
+            "p50": 1105.94,
+            "p95": 2426.08,
+            "n": 40
+          },
+          "total_ms": {
+            "p50": 3096.41,
+            "p95": 11715.88,
+            "n": 40
+          }
+        },
+        "answer_usage": {
+          "prompt_tokens": 27330,
+          "completion_tokens": 1076,
+          "requests_with_usage": 40
+        }
+      },
+      "evidence_v2": {
+        "hits": 41,
+        "total": 41,
+        "recall_at_5": 1.0,
+        "complete_questions": 28,
+        "answerable_questions": 28,
+        "human_annotation_reviewed": false
+      },
+      "model_calls": {
+        "http_attempts": 52,
+        "embedding_http_attempts": 102,
+        "requests_with_usage": 52,
+        "prompt_tokens": 33666,
+        "completion_tokens": 1528
+      }
+    },
+    {
+      "report": "evaluation/outputs/20261015T115305Z-dev/report.json",
+      "sha256": "25c6db6865c09ca84496af691ba2fde99cb49b57f096f09e3ddf767d918d3a19",
+      "split": "dev",
+      "retrieval_only": false,
+      "index_config": {
+        "parser": "pypdf-utf8-v1",
+        "splitter": "paragraph-v2",
+        "document_representation": "body-v1",
+        "chunk_size": 800,
+        "chunk_overlap": 120,
+        "tokenizer_revision": "5617a9f61b028005a4858fdac845db406aefb181"
+      },
+      "adapter_sha256": "d23655d3497fc75e64cc62853261248614baa1b519ffb6933ec013718aa737a7",
+      "prompt_sha256": "c458b77c61fc0f18b4509b2faca66885982cecbe43bfdf5153999c44ec8e0fee",
+      "summary": {
+        "n": 20,
+        "completed": 19,
+        "failures": 1,
+        "evidence_recall_at_5": {
+          "hits": 15,
+          "total": 15,
+          "value": 1.0
+        },
+        "citations": {
+          "valid": 16,
+          "total": 16,
+          "validity": 1.0
+        },
+        "abstention": {
+          "true": 5,
+          "unanswerable": 5,
+          "recall": 1.0,
+          "false_abstentions": 1,
+          "precision": 0.8333333333333334
+        },
+        "reference_fact_presence_proxy": 0.8666666666666667,
+        "human_correctness": null,
+        "human_fact_support": null,
+        "latency": {
+          "retrieval_ms": {
+            "p50": 204.68,
+            "p95": 564.16,
+            "n": 20
+          },
+          "rewrite_ms": {
+            "p50": 1528.82,
+            "p95": 3489.28,
+            "n": 4
+          },
+          "first_token_ms": {
+            "p50": 920.94,
+            "p95": 5476.23,
+            "n": 20
+          },
+          "total_ms": {
+            "p50": 2221.13,
+            "p95": 11694.92,
+            "n": 19
+          }
+        },
+        "answer_usage": {
+          "prompt_tokens": 18516,
+          "completion_tokens": 505,
+          "requests_with_usage": 20
+        }
+      },
+      "evidence_v2": {
+        "hits": 26,
+        "total": 26,
+        "recall_at_5": 1.0,
+        "complete_questions": 15,
+        "answerable_questions": 15,
+        "human_annotation_reviewed": false
+      },
+      "model_calls": {
+        "http_attempts": 28,
+        "embedding_http_attempts": 52,
+        "requests_with_usage": 28,
+        "prompt_tokens": 23656,
+        "completion_tokens": 773
+      }
+    },
+    {
+      "report": "evaluation/outputs/20261015T115624Z-dev/report.json",
+      "sha256": "0d64425cf36f9c9ea083aba60682bc68275e2430e233a0ad824cbcf07d7e35d9",
+      "split": "dev",
+      "retrieval_only": false,
+      "index_config": {
+        "parser": "pypdf-utf8-v1",
+        "splitter": "paragraph-v2",
+        "document_representation": "body-v1",
+        "chunk_size": 800,
+        "chunk_overlap": 120,
+        "tokenizer_revision": "5617a9f61b028005a4858fdac845db406aefb181"
+      },
+      "adapter_sha256": "d23655d3497fc75e64cc62853261248614baa1b519ffb6933ec013718aa737a7",
+      "prompt_sha256": "60f6f13f1f6e6e59d18ea6b01c1732d23d2aaf63a0bf0326cea974a204c56cb6",
+      "summary": {
+        "n": 20,
+        "completed": 20,
+        "failures": 0,
+        "evidence_recall_at_5": {
+          "hits": 15,
+          "total": 15,
+          "value": 1.0
+        },
+        "citations": {
+          "valid": 19,
+          "total": 19,
+          "validity": 1.0
+        },
+        "abstention": {
+          "true": 4,
+          "unanswerable": 5,
+          "recall": 0.8,
+          "false_abstentions": 0,
+          "precision": 1.0
+        },
+        "reference_fact_presence_proxy": 1.0,
+        "human_correctness": null,
+        "human_fact_support": null,
+        "latency": {
+          "retrieval_ms": {
+            "p50": 171.53,
+            "p95": 725.94,
+            "n": 20
+          },
+          "rewrite_ms": {
+            "p50": 1258.84,
+            "p95": 3531.5,
+            "n": 4
+          },
+          "first_token_ms": {
+            "p50": 848.63,
+            "p95": 4284.68,
+            "n": 20
+          },
+          "total_ms": {
+            "p50": 2097.93,
+            "p95": 12391.76,
+            "n": 20
+          }
+        },
+        "answer_usage": {
+          "prompt_tokens": 17147,
+          "completion_tokens": 561,
+          "requests_with_usage": 20
+        }
+      },
+      "evidence_v2": {
+        "hits": 26,
+        "total": 26,
+        "recall_at_5": 1.0,
+        "complete_questions": 15,
+        "answerable_questions": 15,
+        "human_annotation_reviewed": false
+      },
+      "model_calls": {
+        "http_attempts": 28,
+        "embedding_http_attempts": 52,
+        "requests_with_usage": 28,
+        "prompt_tokens": 22093,
+        "completion_tokens": 909
+      }
+    },
+    {
+      "report": "evaluation/outputs/20261015T120029Z-dev/report.json",
+      "sha256": "ab1eec37c2f5d0ad2e8835b322c81e6aac764fb72d96eac1c195d3b4661a47ec",
+      "split": "dev",
+      "retrieval_only": false,
+      "index_config": {
+        "parser": "pypdf-utf8-v1",
+        "splitter": "paragraph-v2",
+        "document_representation": "body-v1",
+        "chunk_size": 800,
+        "chunk_overlap": 120,
+        "tokenizer_revision": "5617a9f61b028005a4858fdac845db406aefb181"
+      },
+      "adapter_sha256": "d23655d3497fc75e64cc62853261248614baa1b519ffb6933ec013718aa737a7",
+      "prompt_sha256": "60f6f13f1f6e6e59d18ea6b01c1732d23d2aaf63a0bf0326cea974a204c56cb6",
+      "summary": {
+        "n": 20,
+        "completed": 20,
+        "failures": 0,
+        "evidence_recall_at_5": {
+          "hits": 15,
+          "total": 15,
+          "value": 1.0
+        },
+        "citations": {
+          "valid": 18,
+          "total": 18,
+          "validity": 1.0
+        },
+        "abstention": {
+          "true": 4,
+          "unanswerable": 5,
+          "recall": 0.8,
+          "false_abstentions": 0,
+          "precision": 1.0
+        },
+        "reference_fact_presence_proxy": 1.0,
+        "human_correctness": null,
+        "human_fact_support": null,
+        "latency": {
+          "retrieval_ms": {
+            "p50": 189.45,
+            "p95": 234.44,
+            "n": 20
+          },
+          "rewrite_ms": {
+            "p50": 4582.73,
+            "p95": 4779.58,
+            "n": 4
+          },
+          "first_token_ms": {
+            "p50": 941.66,
+            "p95": 6051.95,
+            "n": 20
+          },
+          "total_ms": {
+            "p50": 3481.07,
+            "p95": 14428.04,
+            "n": 20
+          }
+        },
+        "answer_usage": {
+          "prompt_tokens": 18113,
+          "completion_tokens": 504,
+          "requests_with_usage": 20
+        }
+      },
+      "evidence_v2": {
+        "hits": 26,
+        "total": 26,
+        "recall_at_5": 1.0,
+        "complete_questions": 15,
+        "answerable_questions": 15,
+        "human_annotation_reviewed": false
+      },
+      "model_calls": {
+        "http_attempts": 28,
+        "embedding_http_attempts": 49,
+        "requests_with_usage": 28,
+        "prompt_tokens": 23139,
+        "completion_tokens": 831
+      }
+    },
+    {
+      "report": "evaluation/outputs/20261015T120728Z-dev/report.json",
+      "sha256": "ae9e3965d3d10b947628719fa8236e5d426da034ad10ee425e51e366ef37fc49",
+      "split": "dev",
+      "retrieval_only": false,
+      "index_config": {
+        "parser": "pypdf-utf8-v1",
+        "splitter": "paragraph-v2",
+        "document_representation": "body-v1",
+        "chunk_size": 800,
+        "chunk_overlap": 120,
+        "tokenizer_revision": "5617a9f61b028005a4858fdac845db406aefb181"
+      },
+      "adapter_sha256": "e9a640d23c87abe1edb87c3194cfa6ca6174084f961b84469966ede245512ac0",
+      "prompt_sha256": "60f6f13f1f6e6e59d18ea6b01c1732d23d2aaf63a0bf0326cea974a204c56cb6",
+      "summary": {
+        "n": 20,
+        "completed": 20,
+        "failures": 0,
+        "evidence_recall_at_5": {
+          "hits": 15,
+          "total": 15,
+          "value": 1.0
+        },
+        "citations": {
+          "valid": 20,
+          "total": 20,
+          "validity": 1.0
+        },
+        "abstention": {
+          "true": 4,
+          "unanswerable": 5,
+          "recall": 0.8,
+          "false_abstentions": 1,
+          "precision": 0.8
+        },
+        "reference_fact_presence_proxy": 0.9333333333333333,
+        "human_correctness": null,
+        "human_fact_support": null,
+        "latency": {
+          "retrieval_ms": {
+            "p50": 169.75,
+            "p95": 242.42,
+            "n": 20
+          },
+          "rewrite_ms": {
+            "p50": 3781.44,
+            "p95": 10159.89,
+            "n": 4
+          },
+          "first_token_ms": {
+            "p50": 1741.78,
+            "p95": 12054.24,
+            "n": 20
+          },
+          "total_ms": {
+            "p50": 3437.96,
+            "p95": 14090.93,
+            "n": 20
+          }
+        },
+        "answer_usage": {
+          "prompt_tokens": 17204,
+          "completion_tokens": 585,
+          "requests_with_usage": 20
+        }
+      },
+      "evidence_v2": {
+        "hits": 26,
+        "total": 26,
+        "recall_at_5": 1.0,
+        "complete_questions": 15,
+        "answerable_questions": 15,
+        "human_annotation_reviewed": false
+      },
+      "model_calls": {
+        "http_attempts": 46,
+        "embedding_http_attempts": 49,
+        "requests_with_usage": 46,
+        "prompt_tokens": 34838,
+        "completion_tokens": 970
+      }
+    },
+    {
+      "report": "evaluation/outputs/20261015T121205Z-all/report.json",
+      "sha256": "1689deb20bf08dc81f97dbf03beb6b100e8130a60274cb8225946978f3351a02",
+      "split": "all",
+      "retrieval_only": false,
+      "index_config": {
+        "parser": "pypdf-utf8-v1",
+        "splitter": "paragraph-v2",
+        "document_representation": "body-v1",
+        "chunk_size": 800,
+        "chunk_overlap": 120,
+        "tokenizer_revision": "5617a9f61b028005a4858fdac845db406aefb181"
+      },
+      "adapter_sha256": "d23655d3497fc75e64cc62853261248614baa1b519ffb6933ec013718aa737a7",
+      "prompt_sha256": "60f6f13f1f6e6e59d18ea6b01c1732d23d2aaf63a0bf0326cea974a204c56cb6",
+      "summary": {
+        "n": 40,
+        "completed": 40,
+        "failures": 0,
+        "evidence_recall_at_5": {
+          "hits": 28,
+          "total": 28,
+          "value": 1.0
+        },
+        "citations": {
+          "valid": 39,
+          "total": 39,
+          "validity": 1.0
+        },
+        "abstention": {
+          "true": 11,
+          "unanswerable": 12,
+          "recall": 0.9166666666666666,
+          "false_abstentions": 0,
+          "precision": 1.0
+        },
+        "reference_fact_presence_proxy": 0.8928571428571429,
+        "human_correctness": null,
+        "human_fact_support": null,
+        "latency": {
+          "retrieval_ms": {
+            "p50": 271.61,
+            "p95": 781.96,
+            "n": 40
+          },
+          "rewrite_ms": {
+            "p50": 1419.25,
+            "p95": 1535.54,
+            "n": 6
+          },
+          "evidence_check_ms": {
+            "p50": null,
+            "p95": null,
+            "n": 0
+          },
+          "first_token_ms": {
+            "p50": 1285.73,
+            "p95": 2965.69,
+            "n": 40
+          },
+          "total_ms": {
+            "p50": 3316.68,
+            "p95": 14995.84,
+            "n": 40
+          }
+        },
+        "answer_usage": {
+          "prompt_tokens": 36591,
+          "completion_tokens": 1209,
+          "requests_with_usage": 40
+        }
+      },
+      "evidence_v2": {
+        "hits": 41,
+        "total": 41,
+        "recall_at_5": 1.0,
+        "complete_questions": 28,
+        "answerable_questions": 28,
+        "human_annotation_reviewed": false
+      },
+      "model_calls": {
+        "http_attempts": 52,
+        "embedding_http_attempts": 99,
+        "requests_with_usage": 52,
+        "prompt_tokens": 44181,
+        "completion_tokens": 1768
+      }
+    }
+  ],
+  "agent_audit": "evaluation/stage5-agent-audit.md",
+  "checks": {
+    "backend_unit_and_real_integration": {
+      "passed": 128,
+      "deselected_live": 4
+    },
+    "real_model_live": {
+      "passed": 4,
+      "deselected": 128
+    },
+    "frontend": {
+      "passed": 16,
+      "typecheck": "passed",
+      "build": "passed"
+    },
+    "lint_and_format": "passed",
+    "actual_openapi_matches": true,
+    "deployed_source_hashes_match": true,
+    "account_kb_membership_fingerprints_unchanged": true,
+    "mysql_port": 3307,
+    "human_review": "pending-per-user-request"
+  },
+  "deployment": {
+    "web": "http://127.0.0.1:8080",
+    "api_worker": "updated",
+    "cold_backup": "artifacts/backups/stage5-recall-before-deploy",
+    "existing_indices": "preserved; manual rebuild opts into new splitter",
+    "restore_of_this_backup": "not repeated"
+  }
+}
