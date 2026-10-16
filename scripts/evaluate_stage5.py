@@ -204,7 +204,13 @@ async def run(args):
         settings.database_url.get_secret_value()
     ).database.endswith("_test"):
         raise SystemExit("只允许 ALLOW_TEST_DATABASE=1 的 *_test 专用数据库")
-    cases_path = ROOT / "evaluation/cases-v1.jsonl"
+    cases_path = args.cases.resolve()
+    from stage5_metrics import score_case, summarize_evidence, validate_cases
+
+    v2_cases = [json.loads(line) for line in (ROOT / "evaluation/cases-v2.jsonl").read_text().splitlines()]
+    v2_by_id = {c["case_id"]: c for c in v2_cases}
+    corpus_text = {p.name: p.read_text() for p in (ROOT / "evaluation/corpus/v1").glob("*.md")}
+    validate_cases(v2_cases, corpus_text)
     cases = [json.loads(line) for line in cases_path.read_text().splitlines()]
     if args.split != "all":
         cases = [c for c in cases if c["split"] == args.split]
@@ -291,6 +297,10 @@ async def run(args):
         "embedding_model": settings.embedding_model,
         "prompt_sha256": hashlib.sha256(SYSTEM.encode()).hexdigest(),
         "cases_sha256": hashlib.sha256(cases_path.read_bytes()).hexdigest(),
+        "evidence_v2_sha256": hashlib.sha256((ROOT / "evaluation/cases-v2.jsonl").read_bytes()).hexdigest(),
+        "retrieval_only": args.retrieval_only,
+        "index_config": worker.snapshot(),
+        "source_hashes": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in [ROOT / "scripts/stage5_metrics.py", ROOT / "scripts/evaluate_stage5.py", ROOT / "backend/app/modules/retrieval/service.py", ROOT / "backend/app/modules/indexing/parser.py", ROOT / "backend/app/modules/indexing/service.py"]},
         "corpus": json.loads((ROOT / "evaluation/manifest-v1.json").read_text()),
         "top_k": 5,
         "chunk_size": settings.chunk_size,
@@ -315,6 +325,7 @@ async def run(args):
             ),
         }
         report["summary"] = summarize(report["rows"])
+        report["evidence_v2_summary"] = summarize_evidence(report["rows"])
         report["holdout_summary"] = (
             summarize([r for r in report["rows"] if r["split"] == "holdout"])
             if any(r["split"] == "holdout" for r in report["rows"])
@@ -378,6 +389,20 @@ async def run(args):
             ]
         print("公开语料真实索引完成；开始固定题集", flush=True)
         for case in cases:
+            if args.retrieval_only:
+                from app.modules.retrieval.schemas import RetrievalInput
+                query = case["question"]
+                rewrite_usage = None
+                if case.get("history_question"):
+                    query, rewrite_usage = await model.rewrite([{ "role": "user", "content": case["history_question"]}], query)
+                candidates = await chat.retrieval.search(user_id, kb_id, RetrievalInput(question=query, top_k=20))
+                row = dict(case_id=case["case_id"], split=case["split"], question=case["question"], answerable=case["answerable"], status="retrieval_only", answer_type=None, citations=[], retrieval_query=query, sources=candidates[:5], candidates=candidates, rewrite_usage=rewrite_usage)
+                row["evidence_v2"] = score_case(v2_by_id[case["case_id"]], candidates[:5], mappings)
+                row["candidate_evidence"] = {str(k): score_case(v2_by_id[case["case_id"]], candidates[:k], mappings) for k in (5,10,20)}
+                report["rows"].append(row)
+                save()
+                print(case["case_id"], row["evidence_v2"], flush=True)
+                continue
             conversation = await chat.create(
                 user_id, ConversationCreate(kb_id=kb_id, title=case["case_id"])
             )
@@ -412,7 +437,13 @@ async def run(args):
                 sources=generation.sources,
                 terminal_event=stream[-1].event,
             )
-            if case["answerable"]:
+            row["evidence_v2"] = score_case(v2_by_id[case["case_id"]], generation.sources, mappings)
+            if args.diagnose and case["answerable"]:
+                from app.modules.retrieval.schemas import RetrievalInput
+                candidates = await chat.retrieval.search(user_id, kb_id, RetrievalInput(question=generation.query, top_k=20))
+                row["candidates"] = candidates
+                row["candidate_evidence"] = {str(k): score_case(v2_by_id[case["case_id"]], candidates[:k], mappings) for k in (5,10,20)}
+            if case["answerable"] and "evidence" in case:
                 # 每题一个预先标注的证据单元；允许切分边界，标注片段至少 90% 在单块中出现。
                 evidence = case["evidence"]
 
@@ -476,13 +507,19 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--env-file", type=Path, required=True)
     parser.add_argument("--key-env-file", type=Path)
-    parser.add_argument("--split", choices=["all", "dev", "holdout"], default="all")
+    parser.add_argument("--split", choices=["all", "dev", "holdout", "regression"], default="all")
+    parser.add_argument("--cases", type=Path, default=ROOT / "evaluation/cases-v2.jsonl")
+    parser.add_argument("--retrieval-only", action="store_true")
+    parser.add_argument("--diagnose", action="store_true")
     args = parser.parse_args()
     values = load_environment(args.env_file)
     if args.key_env_file:
         values["SILICONFLOW_API_KEY"] = load_environment(args.key_env_file).get(
             "SILICONFLOW_API_KEY", ""
         )
+    for name in ("CHUNK_SIZE", "CHUNK_OVERLAP", "CHUNK_STRUCTURE"):
+        if name in os.environ:
+            values[name] = os.environ[name]
     os.environ.update(values)
     os.environ["ALLOW_TEST_DATABASE"] = "1"
     os.environ["FILES_DIR"] = str(ROOT / "artifacts/evaluation-files")
