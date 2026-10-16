@@ -77,10 +77,10 @@ onUnmounted(() => {
       </section>
 
       <section class="capability-panel">
-        <div><div class="eyebrow">NEXT CAPABILITY</div><h2>从文档到可追溯的回答</h2><p>身份与知识库权限已接入；后续将增加文档索引及流式问答。</p></div>
-        <ElTag type="info" effect="plain">RAG 尚未接入</ElTag>
+        <div><div class="eyebrow">NEXT CAPABILITY</div><h2>从文档到可追溯的回答</h2><p>已提供文档上传、索引与来源读取；流式问答将在下一阶段开放。</p></div>
+        <ElTag type="info" effect="plain">问答尚未接入</ElTag>
       </section>
-      <ElAlert title="当前阶段无需模型密钥" description="页面仅检查真实基础服务；文档上传、检索和问答将在后续阶段开放。" type="info" :closable="false" show-icon />
+      <ElAlert title="基础健康与模型能力分别检查" description="文档索引需要配置真实 Embedding Key。本页不调用模型，基础服务就绪不代表模型远端可用。" type="info" :closable="false" show-icon />
       <footer>每 10 秒自动检查 · 健康检查不调用模型</footer>
     </main>
   </div>

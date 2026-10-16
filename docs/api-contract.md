@@ -1,6 +1,6 @@
-# 接口契约 v0.3
+# 接口契约 v0.4
 
-阶段 3 实现健康、身份、知识库及成员接口；文档、检索、问答和 SSE 仍为后续设计契约。各阶段通过 Pydantic 和 FastAPI OpenAPI 落实，只声明当阶段已实现的路由；SSE 事件另按本文件验证。报文示例用于说明结构，不是实际运行数据。
+阶段 4 实现健康、身份、知识库、成员、文档、任务和来源接口，以及无 HTTP 临时入口的 Dense 检索服务；问答和 SSE 仍为后续设计契约。各阶段通过 Pydantic 和 FastAPI OpenAPI 落实，只声明当阶段已实现的路由；SSE 事件另按本文件验证。报文示例用于说明结构，不是实际运行数据。
 
 ## 1. 通用约定
 
@@ -57,7 +57,7 @@ MySQL 执行真实查询；Qdrant 请求带 API key 的 `/collections`，同时�
 | `GET /knowledge-bases` | 分页 | 200 列表 | 只返回当前成员的库 |
 | `GET /knowledge-bases/{kb_id}` | 无 | 200 KnowledgeBase | viewer+ |
 | `PATCH /knowledge-bases/{kb_id}` | `{name?, description?}` | 200 KnowledgeBase | owner |
-| `DELETE /knowledge-bases/{kb_id}` | 无 | 204 | owner；仅允许无未删除文档、无活动任务的库 |
+| `DELETE /knowledge-bases/{kb_id}` | 无 | 204 | owner；仅允许无未删除文档、无活动任务且已删除文档均清理成功的库 |
 | `GET /knowledge-bases/{kb_id}/members` | 分页 | 200 成员列表 | owner |
 | `PUT /knowledge-bases/{kb_id}/members/{user_id}` | `{role}` | 200 Member | owner，目标用户有效 |
 | `DELETE /knowledge-bases/{kb_id}/members/{user_id}` | 无 | 204 | owner，不能移除最后有效 owner |
@@ -91,6 +91,7 @@ profile 由服务端配置并在首次真实 Embedding 接入时验证；第二�
 | `GET /knowledge-bases/{kb_id}/jobs` | 分页、可选 document_id/status | 200 列表 | viewer+，筛选不能跨库 |
 | `GET /jobs/{job_id}` | 无 | 200 Job | viewer+，通过 job 归属鉴权 |
 | `POST /jobs/{job_id}/retry` | 无 | 202 `{job}` | editor+，仅 failed 且无重试后继；新 job 的 retry_of_job_id 指向旧任务 |
+| `GET /documents/{document_id}/chunks` | 分页 | 200 当前有效版本 Chunk 列表，按 ordinal 升序 | viewer+；游标绑定有效版本，换版后重新加载 |
 | `GET /chunks/{chunk_id}` | 无 | 200 来源正文与定位 | viewer+；只能读取未删除文档的当前有效版本 |
 
 tags 最多 10 项，每项 1–32 字符、去重；filename 是展示名称，1–255 字符，不能改变内部路径或媒体类型。标签更新在一个事务修改 MySQL 并创建新的 index 任务；MVP 通过重建同步 Qdrant 元数据，后续再优化为专用同步任务。重建期间保留旧版本，筛选必须按 MySQL 当前标签复核，允许暂时少召回。
@@ -208,3 +209,7 @@ data: {"message_id":"<uuid>","status":"completed","answer_type":"abstention","ci
 | CITATION_INVALID / MESSAGE_PERSIST_FAILED | 引用校验或最终落库失败 |
 
 错误码表在实现时细化，并有契约测试验证 HTTP 状态、响应结构和敏感字段处理。
+
+阶段 4 来源页增加当前有效版本 Chunk 分页入口，便于尚无问答引用时核验正文和 PDF 页码；不增加临时检索 HTTP 路由。
+
+阶段 4 对空库删除补充约束：存在 purged_at 为空的已删除文档时也返回 KB_NOT_EMPTY，避免删除父库后无法授权重试失败的文件清理。

@@ -44,7 +44,7 @@ describe('真实健康状态展示', () => {
     await vi.advanceTimersByTimeAsync(10000)
     await flushPromises()
     expect(wrapper.text()).toContain('基础服务尚未就绪')
-    expect(wrapper.text()).toContain('RAG 尚未接入')
+    expect(wrapper.text()).toContain('问答尚未接入')
     const fetchMock = vi.mocked(fetch)
     const count = fetchMock.mock.calls.length
     wrapper.unmount()

@@ -7,6 +7,10 @@ x-backend-environment: &backend-environment
   HEALTH_TIMEOUT_SECONDS: ${HEALTH_TIMEOUT_SECONDS:-3}
   AUTH_SECRET: ${AUTH_SECRET:?请使用 init_env.py --upgrade 补齐认证配置}
   AUTH_TOKEN_TTL_SECONDS: ${AUTH_TOKEN_TTL_SECONDS:-1800}
+  SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
+  FILES_DIR: /data/files
+  EMBEDDING_BATCH_SIZE: ${EMBEDDING_BATCH_SIZE:-8}
+  EMBEDDING_TIMEOUT_SECONDS: ${EMBEDDING_TIMEOUT_SECONDS:-30}
 
 x-backend-build: &backend-build
   context: .
@@ -48,7 +52,7 @@ services:
 
   migrate:
     # 同一 runtime 构建使用不同标签，避免 Compose 并行导出同名镜像产生竞争。
-    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-migrate:0.3.0
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-migrate:0.4.0
     build: *backend-build
     environment: *backend-environment
     command: ["alembic", "upgrade", "head"]
@@ -57,9 +61,10 @@ services:
     restart: "no"
 
   api:
-    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-backend:0.3.0
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-backend:0.4.0
     build: *backend-build
     environment: *backend-environment
+    volumes: ["files_data:/data/files"]
     depends_on:
       migrate: { condition: service_completed_successfully }
       qdrant: { condition: service_healthy }
@@ -71,8 +76,20 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  worker:
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-worker:0.4.0
+    build: *backend-build
+    environment: *backend-environment
+    volumes: ["files_data:/data/files"]
+    command: ["python", "-m", "app.worker"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      qdrant: { condition: service_healthy }
+    stop_grace_period: 10s
+    restart: unless-stopped
+
   web:
-    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-web:0.3.0
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-web:0.4.0
     build:
       context: .
       dockerfile: deploy/web.Dockerfile
@@ -87,7 +104,7 @@ services:
     restart: unless-stopped
 
   test:
-    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-test:0.3.0
+    image: ${COMPOSE_PROJECT_NAME:-chat-rag}-test:0.4.0
     profiles: ["test"]
     build:
       context: .
@@ -103,3 +120,4 @@ services:
 volumes:
   mysql_data:
   qdrant_data:
+  files_data:

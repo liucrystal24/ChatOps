@@ -10,7 +10,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", default=".env")
     parser.add_argument("--test", action="store_true", help="使用独立测试项目、数据库和 Web 端口")
-    parser.add_argument("--stage", type=int, choices=[2, 3], default=2)
+    parser.add_argument("--stage", type=int, choices=[2, 3, 4], default=2)
     parser.add_argument("--upgrade", action="store_true", help="仅为已有配置补齐缺失的认证配置")
     args = parser.parse_args()
     path = Path(args.output)
@@ -19,7 +19,10 @@ def main() -> None:
             parser.exit(1, "配置文件不存在，请先生成配置\n")
         content = path.read_text()
         keys = {line.split("=", 1)[0] for line in content.splitlines() if "=" in line}
-        additions = {"AUTH_SECRET": secrets.token_hex(32), "AUTH_TOKEN_TTL_SECONDS": 1800}
+        additions = {
+            "AUTH_SECRET": secrets.token_hex(32),
+            "AUTH_TOKEN_TTL_SECONDS": 1800,
+        }
         missing = {key: value for key, value in additions.items() if key not in keys}
         if missing:
             with path.open("a") as output:
@@ -38,6 +41,9 @@ def main() -> None:
     if args.test and args.stage == 3:
         database, project, port = "chat_rag_stage3_test", "chat-rag-stage3-test", 18081
         mysql_port, qdrant_port = 13308, 16334
+    if args.test and args.stage == 4:
+        database, project, port = "chat_rag_stage4_test", "chat-rag-stage4-test", 18082
+        mysql_port, qdrant_port = 13309, 16335
     values = {
         "COMPOSE_PROJECT_NAME": project,
         "WEB_PORT": port,

@@ -19,7 +19,7 @@ async function submit() {
 
 <template>
   <main class="login-layout">
-    <section class="login-intro"><div class="eyebrow">YOUR KNOWLEDGE, CONNECTED</div><h1>让团队知识<br />有序、安全地共享。</h1><p>从一个知识库开始，为团队成员分配合适的访问权限。</p><div class="login-note">当前已开放知识库与成员管理，文档索引及问答将在后续阶段接入。</div></section>
+    <section class="login-intro"><div class="eyebrow">YOUR KNOWLEDGE, CONNECTED</div><h1>让团队知识<br />有序、安全地共享。</h1><p>从一个知识库开始，为团队成员分配合适的访问权限。</p><div class="login-note">已开放知识库、成员管理与文档索引，问答将在下一阶段接入。</div></section>
     <section class="login-card"><h2>登录工作空间</h2><p>使用管理员为你创建的账号</p>
       <ElAlert v-if="error || sessionNotice" :title="error || sessionNotice" type="warning" :closable="false" />
       <ElForm label-position="top" @submit.prevent="submit">

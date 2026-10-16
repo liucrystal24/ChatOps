@@ -14,6 +14,7 @@ function mockApi(role: 'viewer' | 'owner' = 'viewer') {
     if (path.endsWith('/auth/login')) return Promise.resolve(response({ access_token: 'test-memory-token' }))
     expect(new Headers(options.headers).get('Authorization')).toBe('Bearer test-memory-token')
     if (path.endsWith('/auth/me')) return Promise.resolve(response(user))
+    if (path.endsWith('/documents') || path.endsWith('/jobs')) return Promise.resolve(response({ items: [], next_cursor: null }))
     if (path.endsWith('/members')) return Promise.resolve(response({ items: [{ user_id: user.id, username: user.username, role: 'owner', is_active: true }], next_cursor: null }))
     if (path === '/api/v1/knowledge-bases') return Promise.resolve(response({ items: [{ ...kb, my_role: role }], next_cursor: null }))
     return Promise.resolve(response({ ...kb, my_role: role }))

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import DocumentsPanel from './DocumentsPanel.vue'
 import { ElAlert, ElButton, ElForm, ElFormItem, ElInput, ElOption, ElSelect, ElTag } from 'element-plus'
 import { currentUser, request, errorMessage, type KnowledgeBase, type Member, type Page, type Role } from './api/client'
 
@@ -113,7 +114,7 @@ onMounted(() => perform(() => loadList()))
       <section v-if="selected" class="panel detail-panel" aria-label="知识库详情">
         <div class="detail-heading"><div><h2>{{ selected.name }}</h2><p class="muted">{{ selected.id }}</p></div><ElTag type="info">{{ labels[selected.my_role] }} · {{ selected.my_role }}</ElTag></div>
         <p class="description">{{ selected.description || '尚未填写描述' }}</p>
-        <ElAlert title="文档索引与问答尚未接入" description="当前可以管理知识库和成员权限，无需模型密钥。" type="info" :closable="false" />
+        <DocumentsPanel :key="selected.id + selected.my_role" :kb-id="selected.id" :role="selected.my_role" />
         <template v-if="selected.my_role === 'owner'">
           <section class="section-divider"><h3>知识库设置</h3><ElForm label-position="top" @submit.prevent="save">
             <ElFormItem label="修改名称"><ElInput v-model="editName" aria-label="修改名称" maxlength="120" required /></ElFormItem>

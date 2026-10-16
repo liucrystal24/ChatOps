@@ -1,6 +1,6 @@
 # 核心数据模型
 
-阶段 3 已通过 Alembic 实现 users、knowledge_bases、knowledge_base_members 与 authorization_guard；后续表仍为逻辑/物理设计基线。表随阶段增量创建，不一次建齐全部业务表。
+阶段 4 已通过 Alembic 实现 users、knowledge_bases、knowledge_base_members、authorization_guard，以及 documents、jobs、document_index_versions、chunks；阶段 5 会话表仍为逻辑/物理设计基线。表随阶段增量创建，不一次建齐全部业务表。
 
 阶段 2 的 `0001_baseline` 是空业务迁移，仅由 Alembic 建立 `alembic_version` 并记录基线，不创建用户等业务表。就绪检查比较数据库 revision 集合与本地迁移 head 集合，避免数据库落后或超前时误报就绪。
 
@@ -51,7 +51,7 @@ erDiagram
 
 字段：`id` PK、`name VARCHAR(120)`、`description TEXT`、`created_by` FK users、`embedding_profile_id VARCHAR(64) NULL`、`embedding_profile JSON NULL`、`deleted_at`、创建/更新时间。
 
-`embedding_profile` 包括供应商、模型标识/修订、向量维度、距离、预处理版本、collection 名。配置不含密钥；阶段 3 可暂未绑定，首次索引前在事务外探测真实模型，再锁知识库行校验并原子绑定，此后不可任意替换。两个 profile 字段必须同时为空或同时有效；既有知识库启动时校验配置漂移。创建者只记录来源，权限由成员表决定。
+`embedding_profile` 包括供应商、模型标识/修订、向量维度、距离、预处理版本、collection 名。配置不含密钥；阶段 3 可暂未绑定，首次索引前在事务外探测真实模型，再锁知识库行校验并原子绑定，此后不可任意替换。两个 profile 字段必须同时为空或同时有效；既有知识库在重建绑定及检索时校验 profile；启动和健康检查不调用模型。创建者只记录来源，权限由成员表决定。
 
 索引：`(created_by, deleted_at, created_at)`。同名知识库允许存在，以 ID 区分。
 
@@ -170,3 +170,5 @@ erDiagram
 MVP 使用版本化 JSONL 题集和单次运行的 JSON/Markdown 报告，不新增评测管理业务表。题集只包含获授权、可公开提交的真实语料定位与人工标注；运行报告、临时 UUID 映射和私有语料默认不提交。
 
 题集以文件 SHA-256、页码/标题、证据片段定位，不依赖每次重建变化的 Chunk UUID。执行时解析为本次真实数据库资源并记录配置、模型、索引版本和题集哈希。未来需要评测管理 UI 时再增加 evaluation_runs/results 表。
+
+阶段 4 实施补充：documents 增加 `file_type`（txt/md/pdf）、`purged_at`，jobs 的 `stage` 初始可为 queued；清理完成不删除文档/任务历史，purged_at 记录文件清理状态。versions 的 `config_snapshot` 保存解析、切分、tokenizer、模型 profile；不保存密钥。父子复合 FK 在迁移中实际落地，两个循环指针使用命名可空复合 FK 后建。

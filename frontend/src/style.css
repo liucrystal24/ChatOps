@@ -71,3 +71,19 @@ footer { text-align: center; color: #96a0ae; font-size: 11px; padding-top: 38px;
 .welcome-icon { font-size: 32px; color: #5f9588; margin-bottom: 24px; }
 @media (max-width: 900px) { .login-layout { gap: 36px; grid-template-columns: 1fr 340px; } .login-intro h1 { font-size: 32px; } .knowledge-columns { grid-template-columns: 240px minmax(0,1fr); gap: 18px; } .panel { padding: 20px; } }
 @media (max-width: 650px) { .topbar { padding: 0 16px; gap: 4px; flex-wrap: wrap; height: auto; min-height: 80px; padding-block: 16px; } .brand-sub { display: none; } .user-menu { width: 100%; justify-content: flex-end; } .login-layout { grid-template-columns: 1fr; gap: 24px; padding-top: 34px; } .login-intro h1 { font-size: 30px; } .login-note { margin-top: 20px; } .knowledge-columns { grid-template-columns: 1fr; } .detail-heading { flex-direction: column; } .member-list li { flex-wrap: wrap; } .member-identity { flex-basis: 100%; } .member-add { grid-template-columns: 1fr; } }
+
+.document-panel { min-width: 0; }
+.upload-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin: 18px 0; }
+.upload-form > .el-input { flex: 1 1 180px; }
+.upload-form label { display: grid; gap: 8px; max-width: 100%; font-size: 14px; }
+.upload-form input[type=file] { max-width: 100%; }
+.document-list, .job-list { list-style: none; padding: 0; }
+.document-list li, .job-list li { border-top: 1px solid var(--el-border-color-lighter); padding: 16px 0; overflow-wrap: anywhere; }
+.document-list p, .job-list p { margin: 6px 0; }
+.document-list .button-row { margin-top: 12px; flex-wrap: wrap; gap: 8px; }
+.document-list .button-row .el-button + .el-button { margin-left: 0; }
+.job-list li { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.source-panel { padding: 16px; background: #f5f8f6; border-radius: 12px; margin-top: 16px; }
+.source-chunk { border-top: 1px solid #dde7e0; padding: 12px 0; }
+.source-chunk pre { white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; line-height: 1.7; }
+.task-error { color: #b42318; }

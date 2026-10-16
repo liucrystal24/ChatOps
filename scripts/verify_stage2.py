@@ -1,6 +1,7 @@
 """在独立 Compose 项目验证阶段 2；不删除任何卷，所有临时记录均有专用名称。"""
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -41,8 +42,24 @@ def main(stage=2) -> None:
         raise SystemExit("只接受对应阶段的专用测试项目及 _test 数据库")
     secrets = [
         values[key]
-        for key in ("MYSQL_PASSWORD", "MYSQL_ROOT_PASSWORD", "QDRANT_API_KEY", "AUTH_SECRET")
+        for key in (
+            "MYSQL_PASSWORD",
+            "MYSQL_ROOT_PASSWORD",
+            "QDRANT_API_KEY",
+            "AUTH_SECRET",
+        )
     ]
+    if stage == 4:
+        key = os.environ.get("SILICONFLOW_API_KEY", "")
+        if not key:
+            for line in (ROOT / ".env").read_text().splitlines():
+                if line.startswith("SILICONFLOW_API_KEY="):
+                    key = line.partition("=")[2].strip().strip("\"'")
+                    break
+        if not key:
+            raise SystemExit("阶段 4 live 验收需要本地 SILICONFLOW_API_KEY")
+        os.environ["SILICONFLOW_API_KEY"] = key
+        secrets.append(key)
     compose = ["docker", "compose", "--env-file", str(env_file), "-p", project]
     ARTIFACTS.mkdir(exist_ok=True)
     log_path = ARTIFACTS / f"stage{stage}-verification.log"
@@ -56,6 +73,7 @@ def main(stage=2) -> None:
             text=True,
             input=input,
             timeout=timeout,
+            check=False,
         )
         output = result.stdout + result.stderr
         safe_output = output
@@ -98,7 +116,11 @@ def main(stage=2) -> None:
 
     step("1/7 检查 Compose、构建运行镜像与测试镜像")
     run(["config", "--quiet"])
-    run(["build", "api", "migrate", "web", "test"], timeout=1200)
+    run(["stop", "worker"]) if stage == 4 else None
+    run(
+        ["build", "api", "migrate", "web", "test", *(["worker"] if stage == 4 else [])],
+        timeout=1200,
+    )
     step("2/7 启动真实 MySQL/Qdrant，执行单元及服务集成测试")
     run(["up", "-d", "--wait", "--wait-timeout", "180", "mysql", "qdrant"])
     output = run(
@@ -115,6 +137,22 @@ def main(stage=2) -> None:
         ]
     )
     print(output.strip(), flush=True)
+    if stage == 4:
+        live = run(
+            [
+                "run",
+                "--rm",
+                "-e",
+                "ALLOW_TEST_DATABASE=1",
+                "test",
+                "pytest",
+                "-m",
+                "live",
+                "-q",
+                "-s",
+            ]
+        )
+        print(live.strip(), flush=True)
     step("3/7 启动完整骨架，验证迁移任务、页面、代理及 OpenAPI")
     run(["up", "-d", "--wait", "--wait-timeout", "180"])
     wait_ready()
@@ -136,10 +174,14 @@ def main(stage=2) -> None:
         )
     )
     assert actual_spec == json.loads((ROOT / "docs/openapi.json").read_text())
-    if stage == 3:
+    if stage in (3, 4):
         from stage3_network import verify
 
         verify(run, base, secrets)
+    if stage == 4:
+        from stage4_network import verify as verify_documents
+
+        verify_documents(run, base, secrets)
 
     token = uuid4().hex
     collection = f"test_stage2_persistence_{token}"
@@ -191,9 +233,23 @@ asyncio.run(main())
             wait_ready()
 
         step("6/7 重建两个数据容器，验证命名卷中的记录仍存在")
-        run(["up", "-d", "--force-recreate", "--wait", "--wait-timeout", "180", "mysql", "qdrant"])
+        run(
+            [
+                "up",
+                "-d",
+                "--force-recreate",
+                "--wait",
+                "--wait-timeout",
+                "180",
+                "mysql",
+                "qdrant",
+            ]
+        )
         wait_ready()
-        for dependency, destination in (("mysql", "/var/lib/mysql"), ("qdrant", "/qdrant/storage")):
+        for dependency, destination in (
+            ("mysql", "/var/lib/mysql"),
+            ("qdrant", "/qdrant/storage"),
+        ):
             container = run(["ps", "-q", dependency]).strip()
             result = subprocess.run(
                 ["docker", "inspect", "--format", "{{json .Mounts}}", container],
@@ -218,7 +274,18 @@ asyncio.run(main())
             )
 
     step("7/7 检查日志和浏览器静态资源没有后端密钥")
-    logs = run(["logs", "--no-color", "api", "migrate", "web", "mysql", "qdrant"])
+    logs = run(
+        [
+            "logs",
+            "--no-color",
+            "api",
+            "migrate",
+            "web",
+            "mysql",
+            "qdrant",
+            *(["worker"] if stage == 4 else []),
+        ]
+    )
     assert not any(secret in logs for secret in secrets), "日志中检测到密钥"
     sources = re.findall(r'(?:src|href)="(/assets/[^"]+)"', page.decode())
     assert sources
@@ -227,7 +294,10 @@ asyncio.run(main())
         assert status == 200 and not any(secret.encode() in asset for secret in secrets)
     states = run(["ps", "--all", "--format", "{{.Service}} {{.State}} {{.Health}}"])
     print(states.strip(), flush=True)
-    print(f"阶段 {stage} 服务验收全部通过；原始命令结果已脱敏保存到 {log_path}", flush=True)
+    print(
+        f"阶段 {stage} 服务验收全部通过；原始命令结果已脱敏保存到 {log_path}",
+        flush=True,
+    )
 
 
 if __name__ == "__main__":

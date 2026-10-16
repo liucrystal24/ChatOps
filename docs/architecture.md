@@ -1,6 +1,6 @@
 # 系统架构与实现边界
 
-状态：阶段 3 身份与知识库隔离已实现并验收；文档/索引/问答仍为设计基线。更新时间：2026-10-15。
+状态：阶段 4 文档/索引/安全 Dense 服务已实现，最终验收中；问答仍为阶段 5 设计。更新时间：2026-10-15。
 
 ## 1. 目标与假设
 
@@ -52,7 +52,7 @@ Compose 最终包含 `web`、`api`、`worker`、`migrate`、`mysql`、`qdrant`�
 
 依赖方向：路由与 Worker 入口 → 应用服务 → 领域规则/接口 → 外部适配实现。采用具体清晰的服务和仓储，不为每张表机械创建抽象工厂。
 
-目录规划（已实现健康、身份、知识库及基础设施；文档/索引/问答目录后续添加）：
+目录（健康、身份、知识库、文档、索引、Dense 检索与基础设施已实现；问答后续添加）：
 
 ```text
 backend/
@@ -169,9 +169,21 @@ Top-K 默认 5，允许 1–20；可选 score threshold 必须明确对应模型
 - 非流式临时外部错误最多重试 2 次，并受总 deadline 约束；首次 token 输出之后不自动重启生成，避免重复答案。
 - API 保持异步 IO；解析 CPU 工作进入 Worker 受限子进程，限制并发和文件资源。不给每个 SSE 流长期占用数据库连接。
 - `/health/live` 不依赖外部服务；`/health/ready` 检查 MySQL、Qdrant 与迁移状态。模型配置缺失单独显示能力不可用，健康检查不消耗模型额度。
-- 阶段 2 通过 SQLAlchemy asyncmy 和带密钥的 HTTP 探测实现健康检查；Qdrant SDK 到检索阶段才引入。连接池和 HTTP client 由 FastAPI lifespan 管理；探测失败只记录安全状态，不记录原始异常。AUTH_SECRET 到身份阶段才成为必填配置，当前不创建身份接口。
+- 阶段 2 通过 SQLAlchemy asyncmy 和带密钥的 HTTP 探测实现健康检查；阶段 4 选择继续使用 HTTPX REST 适配器，理由见实施决定。连接池和 HTTP client 由 FastAPI lifespan 管理；探测失败只记录安全状态，不记录原始异常。AUTH_SECRET 自阶段 3 起必填；当前已实现身份与文档接口。
 - MySQL/Qdrant 使用命名卷，文件使用独立卷；只有 Web 默认暴露到本机 loopback，开发 profile 才额外开放所需端口。
 - MySQL root 仅用于初始化，应用使用独立账号；Qdrant 开启 API key。密钥只供服务端，版本镜像固定且数据迁移由单独任务执行。
 - 首版给出数据持久化、备份和恢复说明；本地单副本方案可恢复，但不等于生产高可用。
 
 这些边界是本项目设计决策；发布版本和环境事实见 [environment-and-dependencies.md](environment-and-dependencies.md)，阶段验收见 [development-plan.md](development-plan.md)。
+
+## 阶段 4 实施决定（2026-10-15）
+
+用户已选择硅基流动免费 `BAAI/bge-m3` 云端服务，凭据为 `SILICONFLOW_API_KEY`；实际探测 HTTP 200、1024 维。模型标识固定为非 Pro 版；供应商不提供不可变权重修订号，profile 如实记录 `provider-managed`，不能承诺识别同维度的供应商权重变更。
+
+Qdrant 延用 HTTPX 适配器直接调用已核对的 1.19 REST API，避免再加入同步/异步 SDK 与重复连接池。命名向量 dense、等待写确认和强制过滤规则不变。token 计数使用 BAAI 官方固定 revision 的 tokenizer.json 和 tokenizers，不下载模型权重；tokenizer 文件随镜像构建并核验 SHA-256，不在请求路径下载。
+
+文件额外限制：每库未删除文件累计 500 MiB；文件卷使用量达到 2 GiB 时拒绝新上传。正文只在 MySQL、文件卷和获授权模型请求中出现，不写 Qdrant payload 或日志。multipart 总请求体限制为 11 MiB，文件本身上限 10 MiB；临时文件失败即删，超过一天的无业务记录文件由巡检清理。API/Worker 共享文件卷，并行外部操作不持数据库事务。
+
+清理任务只清理已经失效的版本或已删除文档；为防迟到 Worker 在清理后写入，周期巡检重复删除所有 failed/retired 版本向量（幂等），MySQL 保留版本与任务历史。阶段 4 尚无引用表，可清理失效 Chunk；阶段 5 加引用后需扩展保留策略。有效版本点缺失时清除有效指针并创建修复任务，不能继续标记可检索。
+
+阶段 4 空库删除要求所有已删除文档 purged_at 非空，避免清理失败后先删父库造成无法授权重试、文件永久残留。上传落盘按单 API 进程串行配额检查；当前仍只部署一个 API 进程，扩展多 API 写入前需引入跨进程存储配额预留。

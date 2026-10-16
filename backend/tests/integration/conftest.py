@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -14,7 +14,16 @@ from app.core.config import load_settings
 from app.core.pagination import Cursors
 from app.core.security import LoginLimiter, Security
 from app.infrastructure.database import create_engine
-from app.infrastructure.models import AuthorizationGuard, KnowledgeBase, Membership, User
+from app.infrastructure.models import (
+    AuthorizationGuard,
+    Chunk,
+    Document,
+    IndexVersion,
+    Job,
+    KnowledgeBase,
+    Membership,
+    User,
+)
 from app.infrastructure.repositories import Database
 from app.main import create_app
 from app.modules.identity.service import IdentityService
@@ -94,6 +103,27 @@ async def bundle(prepared_settings):
                     .all()
                 )
                 if kbs:
+                    keys = (
+                        await connection.scalars(
+                            select(Document.storage_key).where(Document.kb_id.in_(kbs))
+                        )
+                    ).all()
+                    await connection.execute(
+                        update(Document)
+                        .where(Document.kb_id.in_(kbs))
+                        .values(active_index_version_id=None, current_job_id=None)
+                    )
+                    await connection.execute(delete(Chunk).where(Chunk.kb_id.in_(kbs)))
+                    await connection.execute(
+                        delete(IndexVersion).where(IndexVersion.kb_id.in_(kbs))
+                    )
+                    await connection.execute(
+                        update(Job).where(Job.kb_id.in_(kbs)).values(retry_of_job_id=None)
+                    )
+                    await connection.execute(delete(Job).where(Job.kb_id.in_(kbs)))
+                    await connection.execute(delete(Document).where(Document.kb_id.in_(kbs)))
+                    for key in keys:
+                        (settings.files_dir / key).unlink(missing_ok=True)
                     await connection.execute(delete(Membership).where(Membership.kb_id.in_(kbs)))
                     await connection.execute(delete(KnowledgeBase).where(KnowledgeBase.id.in_(kbs)))
                 await connection.execute(delete(User).where(User.id.in_(ids)))

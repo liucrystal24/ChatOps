@@ -4,13 +4,15 @@ COPY --from=uv /uv /usr/local/bin/uv
 ENV UV_PYTHON_DOWNLOADS=never UV_LINK_MODE=copy PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 COPY backend/pyproject.toml backend/uv.lock ./
+COPY scripts/fetch_tokenizer.py /tmp/fetch_tokenizer.py
+RUN python /tmp/fetch_tokenizer.py /app/assets/bge-m3-tokenizer.json
 
 FROM base AS runtime
 RUN uv sync --frozen --no-dev
 COPY backend/app ./app
 COPY backend/alembic.ini ./
 COPY backend/migrations ./migrations
-RUN useradd --create-home --uid 10001 app
+RUN useradd --create-home --uid 10001 app && mkdir -p /data/files && chown app:app /data/files
 USER app
 ENV PATH="/app/.venv/bin:$PATH"
 CMD ["uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]

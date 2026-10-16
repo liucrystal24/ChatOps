@@ -37,11 +37,11 @@ export function errorMessage(error: unknown): string {
   return error instanceof ApiError ? error.message : '操作失败，请稍后重试'
 }
 
-export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function request<T>(path: string, init: RequestInit = {}, format: 'json' | 'blob' = 'json'): Promise<T> {
   const epoch = generation
   const headers = new Headers(init.headers)
   if (token) headers.set('Authorization', `Bearer ${token}`)
-  if (init.body) headers.set('Content-Type', 'application/json')
+  if (init.body && !(init.body instanceof FormData)) headers.set('Content-Type', 'application/json')
   try {
     const response = await fetch(`/api/v1${path}`, {
       ...init, headers, cache: 'no-store',
@@ -55,7 +55,7 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
       throw new ApiError(data?.error?.code ?? 'HTTP_ERROR', data?.error?.message ?? '服务暂时无法处理请求', response.status, data?.error?.request_id ?? '')
     }
     if (response.status === 204) return undefined as T
-    const data: T = await response.json()
+    const data = (format === 'blob' ? await response.blob() : await response.json()) as T
     if (epoch !== generation) throw new ApiError('REQUEST_CANCELLED', '请求已取消')
     return data
   } catch (error) {

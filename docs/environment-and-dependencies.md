@@ -106,3 +106,14 @@ TypeScript 7 的发布不自动证明 Vue 类型检查工具已经兼容。若�
 - 阶段 3 测试项目为 chat-rag-stage3-test，数据库 chat_rag_stage3_test，Web 18081；测试运行日志和临时浏览器凭据被 Git/Docker 忽略，不作为默认账号或服务回退。
 
 实际检查结果与未验证边界见 [stage-3-delivery.md](stage-3-delivery.md)。
+
+## 阶段 4 官方接口核对（2026-10-15）
+
+- [硅基流动 Embeddings](https://api-docs.siliconflow.cn/docs/api/embeddings-post)：POST /v1/embeddings，BAAI/bge-m3 单文本上限 8192 tokens；选免费非 Pro 模型，API Key 来自本地环境。实际探测返回 1024 维，usage 为供应商返回值。
+- [BAAI 模型与 tokenizer](https://huggingface.co/BAAI/bge-m3)：固定 revision 5617a9f61b028005a4858fdac845db406aefb181，不下载模型权重。
+- [Qdrant 1.19 query points](https://api.qdrant.tech/api-reference/search/query-points)：命名向量 using=dense，filter 强制 server scope；直接 HTTPX，不再引 SDK。
+- [FastAPI 上传](https://fastapi.tiangolo.com/tutorial/request-files/)、[pypdf 文本提取](https://pypdf.readthedocs.io/en/stable/user/extract-text.html)：UploadFile 分块读；PDF 受限子进程解析，不支持 OCR。
+
+分块 API 已核对 [RecursiveCharacterTextSplitter](https://reference.langchain.com/python/langchain-text-splitters/character/RecursiveCharacterTextSplitter)，使用当前独立包及 keep_separator=end、add_start_index=True；中文字符长度与真实 tokenizer token_count 分开记录。
+
+官方 Embeddings 文档未列统一批量条数上限；本项目默认每批 8 条、本地参数上限 32，供应商拒绝时明确失败，不以本地上限宣称远端承诺。真实 PDF 两页批量已验证，8192 token 按每个文本限制执行。新增 python-multipart 0.0.32、pypdf 6.20.1、langchain-text-splitters 1.1.3、tokenizers 0.23.3，完整传递依赖在 uv.lock；API/Worker 启动不加载 pypdf/切分框架，只在受限解析子进程中加载。

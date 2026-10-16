@@ -92,7 +92,8 @@ class KnowledgeBaseService:
         async with self.database.transaction() as repo:
             await repo.lock_authorization()
             kb, _ = await access(repo, actor_id, kb_id, owner=True, lock=True)
-            # 阶段 3 尚无文档/任务表；阶段 4 开放上传前须在此事务检查非空库条件。
+            if await repo.kb_has_resources(kb_id):
+                raise AppError(409, "KB_NOT_EMPTY", "请先删除文档并等待文件及向量清理成功")
             await repo.delete_knowledge_base(kb)
 
     async def members(self, actor_id: str, kb_id: str, page: Pagination):

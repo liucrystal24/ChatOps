@@ -45,6 +45,10 @@ def test_mysql_migrations_readiness_and_idempotency(settings):
 
     existing = asyncio.run(tables())
     expected = {
+        "documents",
+        "jobs",
+        "document_index_versions",
+        "chunks",
         "alembic_version",
         "authorization_guard",
         "users",

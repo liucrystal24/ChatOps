@@ -65,7 +65,8 @@ def test_request_ids_http_errors_and_openapi():
         "/api/v1/auth/login",
         "/api/v1/knowledge-bases",
     } <= set(spec["paths"])
-    assert not any("documents" in path or "conversations" in path for path in spec["paths"])
+    assert "/api/v1/documents/{document_id}" in spec["paths"]
+    assert not any("conversations" in path for path in spec["paths"])
     assert "503" in spec["paths"]["/health/ready"]["get"]["responses"]
 
 
@@ -126,3 +127,17 @@ async def test_qdrant_probe_checks_credentials_and_handles_timeout():
         base_url="http://qdrant:6333", transport=httpx.MockTransport(timeout)
     ) as client:
         assert await DependencyProbes(None, client, set(), 0.1).qdrant() == "unavailable"
+
+
+def test_declared_upload_body_limit_is_safe_before_multipart_parsing():
+    _, client, _ = client_for()
+    response = client.post(
+        "/api/v1/knowledge-bases/oversize/documents",
+        headers={
+            "Content-Length": str(12 * 1024**2),
+            "Content-Type": "multipart/form-data; boundary=x",
+        },
+    )
+    assert response.status_code == 413
+    assert response.json()["error"]["code"] == "DOCUMENT_TOO_LARGE"
+    assert response.headers["x-request-id"] == response.json()["error"]["request_id"]

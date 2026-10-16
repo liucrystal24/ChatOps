@@ -59,7 +59,9 @@ def verify(run, base: str, secret_values: list[str]):
         tokens = []
         for user in users:
             result = http(
-                "POST", "/auth/login", body={"username": user["username"], "password": password}
+                "POST",
+                "/auth/login",
+                body={"username": user["username"], "password": password},
             )
             tokens.append(result["access_token"])
             secret_values.append(result["access_token"])

@@ -9,11 +9,20 @@ from starlette.exceptions import HTTPException
 
 
 class AppError(Exception):
-    def __init__(self, status: int, code: str, message: str, headers: dict | None = None):
+    def __init__(
+        self,
+        status: int,
+        code: str,
+        message: str,
+        headers: dict | None = None,
+        *,
+        details: dict | None = None,
+    ):
         self.status = status
         self.code = code
         self.message = message
         self.headers = headers or {}
+        self.details = details or {}
         super().__init__(code)
 
 
@@ -46,7 +55,7 @@ def error_response(request: Request, status: int, code: str, message: str, detai
 def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def application_error(request: Request, exc: AppError):
-        response = error_response(request, exc.status, exc.code, exc.message)
+        response = error_response(request, exc.status, exc.code, exc.message, exc.details)
         response.headers.update(exc.headers)
         return response
 
@@ -59,6 +68,7 @@ def install_error_handlers(app: FastAPI) -> None:
         codes = {
             404: ("RESOURCE_NOT_FOUND", "资源不存在或不可访问"),
             405: ("METHOD_NOT_ALLOWED", "请求方法不支持"),
+            413: ("DOCUMENT_TOO_LARGE", "上传请求超过大小限制"),
         }
         code, message = codes.get(exc.status_code, ("HTTP_ERROR", "请求无法处理"))
         response = error_response(request, exc.status_code, code, message)

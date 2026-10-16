@@ -4,6 +4,8 @@ from uuid import uuid4
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.infrastructure.document_queries import DocumentQueries
+from app.infrastructure.index_queries import IndexQueries
 from app.infrastructure.models import AuthorizationGuard, KnowledgeBase, Membership, User
 
 
@@ -22,7 +24,7 @@ class Database:
             yield Repository(session)
 
 
-class Repository:
+class Repository(DocumentQueries, IndexQueries):
     def __init__(self, session: AsyncSession):
         self.session = session
 
