@@ -156,7 +156,9 @@ docker compose --env-file .env.stage5-test -p chat-rag-stage5-test down
 
 ## 文档与下一阶段
 
-面试准备可先读[RAG优化图文与代码讲解](docs/interview-rag-optimization-guide.md)，再读[一分钟口述与追问卡](docs/interview-rag-optimization-pitch.md)。内容按实际错题、代码修改及同口径评测整理。
+RAG优化可先读[RAG优化图文与代码讲解](docs/interview-rag-optimization-guide.md)，再读[简要总结与常见追问](docs/interview-rag-optimization-pitch.md)。内容按实际错题、代码修改及同口径评测整理。
+
+完整项目说明见[项目总结和常见问题分析](docs/project-summary-faq.md)，包含数据流、业务逻辑、技术要点、重难点和26项常见问题与解答。
 
 - [架构与边界](docs/architecture.md)
 - [数据模型](docs/data-model.md)
